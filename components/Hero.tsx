@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "motion/react";
-import { ArrowDown, HelpCircle } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 
 interface HeroProps {
   onCtaClick: () => void;
@@ -12,11 +13,13 @@ export default function Hero({ onCtaClick }: HeroProps) {
     <div className="relative h-[85vh] min-h-[500px] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
-          src="https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?q=80&w=1600&auto=format&fit=crop"
+        <Image
+          src="/background.webp"
           alt="Premium raw fresh seafood on ice"
-          className="w-full h-full object-cover scale-105 filter brightness-75 contrast-105 scale-image"
-          referrerPolicy="no-referrer"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover scale-105 filter brightness-75 contrast-105 scale-image"
         />
         {/* Dark Icy Gradient Overlay to ensure maximum text contrast */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#00102d]/50 via-[#00102d]/75 to-[#00102d]" />
@@ -78,7 +81,9 @@ export default function Hero({ onCtaClick }: HeroProps) {
 
       {/* Floating hints about Cold Chain safety */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center">
-        <span className="text-xs text-[#cfdaf1]/75 font-sans tracking-widest font-medium mb-1">SCROLL DOWN</span>
+        <span className="text-xs text-[#cfdaf1]/75 font-sans tracking-widest font-medium mb-1">
+          SCROLL DOWN
+        </span>
         <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#cfdaf1] to-transparent animate-pulse" />
       </div>
     </div>

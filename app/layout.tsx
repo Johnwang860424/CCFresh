@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     description: "急凍真鮮 · 日日直送。專業低溫宅配，鎖住最初的鮮甜。",
     type: "website",
   },
+  icons: {
+    icon: "/logo.jpg",
+  },
 };
 
 export default function RootLayout({

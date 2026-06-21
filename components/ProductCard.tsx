@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Minus, Flame, ShieldAlert, Sparkles, TrendingDown } from "lucide-react";
+import { Plus, Minus, TrendingDown } from "lucide-react";
 import { Product, CartItem } from "../types";
 
 interface ProductCardProps {
-  key?: string | number;
   product: Product;
   cartItem: CartItem | undefined;
   onAddToCart: (product: Product) => void;
@@ -17,48 +16,35 @@ export default function ProductCard({
   product,
   cartItem,
   onAddToCart,
-  onRemoveOneFromCart
+  onRemoveOneFromCart,
 }: ProductCardProps) {
   const quantity = cartItem ? cartItem.quantity : 0;
 
-  // Select badge color or icon based on item badge
+  // Promo badge (only rendered when the product carries a promo summary)
   const renderBadge = () => {
     if (!product.badge) return null;
 
-    let badgeColors = "bg-[#ba1a1a] text-white";
-    let Icon = Flame;
-
-    if (product.badge === "限量") {
-      badgeColors = "bg-[#00102d] text-[#b0c6f9] border border-[#b0c6f9]/30";
-      Icon = ShieldAlert;
-    } else if (product.badge === "新品") {
-      badgeColors = "bg-[#0050cc] text-white";
-      Icon = Sparkles;
-    } else if (product.badge === "特惠") {
-      badgeColors = "bg-[#ef6c00] text-white";
-      Icon = TrendingDown;
-    }
-
     return (
-      <div className={`absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center space-x-1 shadow-md ${badgeColors}`}>
-        <Icon className="w-3.5 h-3.5" />
+      <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center space-x-1 shadow-md bg-[#ef6c00] text-white">
+        <TrendingDown className="w-3.5 h-3.5" />
         <span>{product.badge}</span>
       </div>
     );
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#dee8ff] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#cfdaf1] transition-all duration-300 flex flex-col group relative">
+    <div className="w-full h-full bg-white rounded-xl border border-[#dee8ff] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#cfdaf1] transition-all duration-300 flex flex-col group relative">
       {/* Product Image Stage */}
       <div className="relative aspect-4/3 w-full bg-[#f0f3ff] overflow-hidden">
         {renderBadge()}
-        
-        <img
+
+        <Image
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          fill
+          sizes="(max-width: 640px) 80vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
           referrerPolicy="no-referrer"
-          loading="lazy"
         />
         {/* Subtle ice shimmer effect on hover */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -69,15 +55,23 @@ export default function ProductCard({
         <h3 className="text-[#00102d] text-base font-bold font-sans tracking-wide mb-1 leading-snug group-hover:text-[#0050cc] transition-colors">
           {product.name}
         </h3>
-        
-        <p className="text-xs text-[#44474f] font-sans font-medium mb-4 flex-1">
+
+        <p className="text-xs text-[#44474f] font-sans font-medium mb-1">
           {product.weight}
         </p>
+
+        {product.description && (
+          <p className="text-xs text-[#5c5f6b] font-sans leading-relaxed mb-4 flex-1">
+            {product.description}
+          </p>
+        )}
 
         {/* Pricing & Cart Action Block */}
         <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-100">
           <div className="flex flex-col">
-            <span className="text-[10px] text-[#44474f] uppercase font-bold tracking-wider -mb-1">會員價</span>
+            <span className="text-[10px] text-[#44474f] uppercase font-bold tracking-wider -mb-1">
+              會員價
+            </span>
             <span className="text-lg font-black text-[#0050cc] font-sans">
               NT$ {product.price.toLocaleString()}
             </span>

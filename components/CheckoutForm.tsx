@@ -1,46 +1,115 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent } from "react";
-import { Send, ShoppingBag, MapPin, Phone, User, FileText, RefreshCw, AlertCircle, ShoppingCart } from "lucide-react";
-import { CartItem, OrderFormData } from "../types";
-import { DELIVERY_LOCATIONS } from "../data";
+import { useState, useMemo, ChangeEvent, SubmitEvent } from "react";
+import {
+  Send,
+  MapPin,
+  Phone,
+  User,
+  FileText,
+  AlertCircle,
+  ShoppingCart,
+  Trash2,
+  Store,
+  Truck,
+  Home,
+} from "lucide-react";
+import {
+  CartItem,
+  OrderFormData,
+  PickupSpot,
+  DeliveryMethod,
+  OrderConfirmation,
+} from "../types";
+import { calcLineSubtotal } from "../app/lib/promotions";
+import { isValidTwMobile } from "../app/lib/validation";
+import { useResource } from "../app/lib/useResource";
 
 interface CheckoutFormProps {
   cart: CartItem[];
-  onSubmitOrder: (formData: OrderFormData) => void;
-  onClearCart: () => void;
+  onSubmitOrder: (
+    formData: OrderFormData,
+    confirmation: OrderConfirmation,
+  ) => void;
+  onRemoveItem: (productId: string) => void;
 }
 
 export default function CheckoutForm({
   cart,
   onSubmitOrder,
-  onClearCart
+  onRemoveItem,
 }: CheckoutFormProps) {
-  const [formData, setFormData] = useState<OrderFormData>({
+  // location 為送出時才組出的顯示字串，不放進輸入狀態。
+  const [formData, setFormData] = useState<Omit<OrderFormData, "location">>({
     name: "",
     phone: "",
-    location: "",
-    remarks: ""
+    deliveryMethod: "pickup",
+    city: "",
+    township: "",
+    address: "",
+    remarks: "",
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const {
+    data: spotsData,
+    loading: spotsLoading,
+    error: spotsError,
+  } = useResource<PickupSpot[]>(
+    "/api/pickup-spots",
+    "取貨地點載入失敗，請稍後再試",
+  );
+  const spots = useMemo(() => spotsData ?? [], [spotsData]);
+
+  // 縣市清單去重；鄉鎮市區依目前選到的縣市過濾。
+  const cities = useMemo(
+    () => Array.from(new Set(spots.map((s) => s.city))),
+    [spots],
+  );
+  const townships = useMemo(
+    () => spots.filter((s) => s.city === formData.city).map((s) => s.township),
+    [spots, formData.city],
+  );
+
+  const clearError = (key: string) => {
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const handleMethodChange = (method: DeliveryMethod) => {
+    setFormData((prev) => ({ ...prev, deliveryMethod: method }));
+    setErrors({});
+  };
+
+  const handleCityChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const city = e.target.value;
+    // 換縣市時清掉已選的鄉鎮市區，避免殘留不相符的選項。
+    setFormData((prev) => ({ ...prev, city, township: "" }));
+    clearError("city");
+    clearError("township");
+  };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const totalPrice = cart.reduce(
+    (sum, item) =>
+      sum +
+      calcLineSubtotal(item.product.promo, item.product.price, item.quantity),
+    0,
+  );
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear errors when writing to the field
-    if (errors[name]) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[name];
-        return next;
-      });
-    }
+    clearError(name);
   };
 
   const validateForm = (): boolean => {
@@ -50,34 +119,84 @@ export default function CheckoutForm({
       newErrors.name = "請輸入真實姓名";
     }
 
-    const phoneRegex = /^09\d{8}$|^09\d{2}-\d{6}$/;
     if (!formData.phone.trim()) {
       newErrors.phone = "請輸入聯絡電話";
-    } else if (!phoneRegex.test(formData.phone.replace(/[\s-]/g, ""))) {
+    } else if (!isValidTwMobile(formData.phone)) {
       newErrors.phone = "請輸入有效的台灣手機號碼 (例如: 0912345678)";
     }
 
-    if (!formData.location) {
-      newErrors.location = "請選擇取貨/交貨地點";
+    if (formData.deliveryMethod === "pickup") {
+      if (!formData.city) {
+        newErrors.city = "請選擇縣市";
+      } else if (!formData.township) {
+        newErrors.township = "請選擇地點";
+      }
+    } else {
+      if (!formData.address.trim()) {
+        newErrors.address = "請輸入收件地址";
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
+    if (submitting) return;
     if (totalItems === 0) {
       setErrors({ cart: "購物車內目前沒有商品，請先向上下訂選購！" });
       return;
     }
-    if (validateForm()) {
-      onSubmitOrder(formData);
+    if (!validateForm()) return;
+
+    const location =
+      formData.deliveryMethod === "pickup"
+        ? `指定地點自取 · ${formData.city}${formData.township}`
+        : `宅配到府 · ${formData.address}`;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: formData.name,
+          phone: formData.phone,
+          deliveryMethod: formData.deliveryMethod,
+          city: formData.city,
+          township: formData.township,
+          address: formData.address,
+          note: formData.remarks,
+          // 只送 id + 數量；價格由後端依商品目錄重算。
+          items: cart.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          (data as { error?: string } | null)?.error ?? "訂單送出失敗",
+        );
+      }
+      onSubmitOrder({ ...formData, location }, data as OrderConfirmation);
+    } catch (err) {
+      console.error("Failed to submit order", err);
+      setErrors({
+        submit: err instanceof Error ? err.message : "訂單送出失敗，請稍後再試",
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div id="checkout-section" className="bg-[#f0f3ff] py-16 px-4 sm:px-6 lg:px-8 border-t border-[#dee8ff]">
+    <div
+      id="checkout-section"
+      className="bg-[#f0f3ff] py-16 px-4 sm:px-6 lg:px-8 border-t border-[#dee8ff]"
+    >
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl border border-[#dee8ff] p-6 sm:p-8 shadow-md">
           {/* Section Header */}
@@ -99,11 +218,39 @@ export default function CheckoutForm({
               {totalItems > 0 && (
                 <div className="max-h-40 overflow-y-auto px-1 text-left space-y-2 border-y border-[#cfdaf1]/50 py-3 bg-white/40 rounded-lg">
                   {cart.map((item) => (
-                    <div key={item.product.id} className="flex justify-between items-center text-xs font-sans text-[#111c2c] px-2 py-1 bg-white/60 rounded">
-                      <span className="font-semibold">{item.product.name} ({item.product.weight.split(" ")[0]})</span>
-                      <div className="space-x-3">
-                        <span className="text-[#44474f]">數量: {item.quantity}</span>
-                        <span className="font-bold text-[#0050cc]">NT$ {(item.product.price * item.quantity).toLocaleString()}</span>
+                    <div
+                      key={item.product.id}
+                      className="flex justify-between items-center text-xs font-sans text-[#111c2c] px-2 py-1 bg-white/60 rounded"
+                    >
+                      <span className="font-semibold">
+                        {item.product.name}
+                        {item.product.weight?.trim() && (
+                          <span className="font-normal text-[#44474f]">
+                            {" "}
+                            ({item.product.weight.split(" ")[0]})
+                          </span>
+                        )}
+                      </span>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-[#44474f]">
+                          數量: {item.quantity}
+                        </span>
+                        <span className="font-bold text-[#0050cc]">
+                          NT${" "}
+                          {calcLineSubtotal(
+                            item.product.promo,
+                            item.product.price,
+                            item.quantity,
+                          ).toLocaleString()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveItem(item.product.id)}
+                          aria-label={`移除 ${item.product.name}`}
+                          className="p-1 text-[#ba1a1a] rounded transition-colors hover:bg-[#ffdad6] cursor-pointer active:scale-95"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -134,7 +281,9 @@ export default function CheckoutForm({
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
                   <User className="w-3.5 h-3.5 text-[#0050cc]" />
-                  <span>姓名 <span className="text-[#ba1a1a]">*</span></span>
+                  <span>
+                    姓名 <span className="text-[#ba1a1a]">*</span>
+                  </span>
                 </label>
                 <div className="relative">
                   <input
@@ -143,12 +292,17 @@ export default function CheckoutForm({
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="請輸入真實姓名"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.name ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40" : "border-[#cfdaf1] hover:border-[#485e8a]"
-                      }`}
+                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${
+                      errors.name
+                        ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                        : "border-[#cfdaf1] hover:border-[#485e8a]"
+                    }`}
                   />
                 </div>
                 {errors.name && (
-                  <p className="text-xs font-bold text-[#ba1a1a]">{errors.name}</p>
+                  <p className="text-xs font-bold text-[#ba1a1a]">
+                    {errors.name}
+                  </p>
                 )}
               </div>
 
@@ -156,7 +310,9 @@ export default function CheckoutForm({
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
                   <Phone className="w-3.5 h-3.5 text-[#0050cc]" />
-                  <span>聯絡電話 <span className="text-[#ba1a1a]">*</span></span>
+                  <span>
+                    聯絡電話 <span className="text-[#ba1a1a]">*</span>
+                  </span>
                 </label>
                 <div className="relative">
                   <input
@@ -164,48 +320,185 @@ export default function CheckoutForm({
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    placeholder="09XX-XXXXXX"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.phone ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40" : "border-[#cfdaf1] hover:border-[#485e8a]"
-                      }`}
+                    placeholder="09XXXXXXXX"
+                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${
+                      errors.phone
+                        ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                        : "border-[#cfdaf1] hover:border-[#485e8a]"
+                    }`}
                   />
                 </div>
                 {errors.phone && (
-                  <p className="text-xs font-bold text-[#ba1a1a]">{errors.phone}</p>
+                  <p className="text-xs font-bold text-[#ba1a1a]">
+                    {errors.phone}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* 定點交貨地點 Dropdown */}
+            {/* 取貨方式 */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
                 <MapPin className="w-3.5 h-3.5 text-[#0050cc]" />
-                <span>定點交貨地點 <span className="text-[#ba1a1a]">*</span></span>
+                <span>
+                  取貨方式 <span className="text-[#ba1a1a]">*</span>
+                </span>
               </label>
-              <div className="relative">
-                <select
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.location ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40" : "border-[#cfdaf1] hover:border-[#485e8a]"
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    { value: "pickup", label: "指定地點自取", Icon: Store },
+                    { value: "delivery", label: "宅配到府", Icon: Truck },
+                  ] as const
+                ).map(({ value, label, Icon }) => {
+                  const active = formData.deliveryMethod === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleMethodChange(value)}
+                      className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border text-sm font-bold transition-all cursor-pointer active:scale-95 ${
+                        active
+                          ? "bg-[#00102d] text-white border-[#00102d] shadow-md"
+                          : "bg-[#f9f9ff] text-[#44474f] border-[#cfdaf1] hover:border-[#485e8a]"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {formData.deliveryMethod === "pickup" ? (
+              /* 指定地點自取：先選縣市，再選鄉鎮市區 */
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#0050cc]" />
+                  <span>
+                    取貨地點 <span className="text-[#ba1a1a]">*</span>
+                  </span>
+                </label>
+
+                {spotsError ? (
+                  <p className="text-xs font-bold text-[#ba1a1a]">
+                    {spotsError}
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* 縣市 */}
+                    <div className="space-y-1.5">
+                      <div className="relative">
+                        <select
+                          name="city"
+                          value={formData.city}
+                          onChange={handleCityChange}
+                          disabled={spotsLoading}
+                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${
+                            errors.city
+                              ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                              : "border-[#cfdaf1] hover:border-[#485e8a]"
+                          }`}
+                        >
+                          <option value="">
+                            {spotsLoading ? "載入中..." : "請選擇縣市"}
+                          </option>
+                          {cities.map((city) => (
+                            <option key={city} value={city}>
+                              {city}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#44474f]">
+                          <svg
+                            className="fill-current h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                          </svg>
+                        </div>
+                      </div>
+                      {errors.city && (
+                        <p className="text-xs font-bold text-[#ba1a1a]">
+                          {errors.city}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* 鄉鎮市區 */}
+                    <div className="space-y-1.5">
+                      <div className="relative">
+                        <select
+                          name="township"
+                          value={formData.township}
+                          onChange={handleInputChange}
+                          disabled={!formData.city}
+                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${
+                            errors.township
+                              ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                              : "border-[#cfdaf1] hover:border-[#485e8a]"
+                          }`}
+                        >
+                          <option value="">
+                            {formData.city ? "請選擇地點" : "請先選擇縣市"}
+                          </option>
+                          {townships.map((township) => (
+                            <option key={township} value={township}>
+                              {township}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#44474f]">
+                          <svg
+                            className="fill-current h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                          </svg>
+                        </div>
+                      </div>
+                      {errors.township && (
+                        <p className="text-xs font-bold text-[#ba1a1a]">
+                          {errors.township}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* 宅配到府：自行填寫收件地址 */
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
+                    <Home className="w-3.5 h-3.5 text-[#0050cc]" />
+                    <span>
+                      收件地址 <span className="text-[#ba1a1a]">*</span>
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    placeholder="請輸入完整收件地址"
+                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${
+                      errors.address
+                        ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                        : "border-[#cfdaf1] hover:border-[#485e8a]"
                     }`}
-                >
-                  <option value="">請選擇交貨地點</option>
-                  {DELIVERY_LOCATIONS.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#44474f]">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
+                  />
+                  {errors.address && (
+                    <p className="text-xs font-bold text-[#ba1a1a]">
+                      {errors.address}
+                    </p>
+                  )}
                 </div>
               </div>
-              {errors.location && (
-                <p className="text-xs font-bold text-[#ba1a1a]">{errors.location}</p>
-              )}
-            </div>
+            )}
 
             {/* 備註 Textarea */}
             <div className="space-y-1.5">
@@ -218,19 +511,32 @@ export default function CheckoutForm({
                 value={formData.remarks}
                 onChange={handleInputChange}
                 rows={3}
+                maxLength={100}
                 placeholder="有任何特殊需求請在此填寫..."
                 className="w-full px-4 py-3 bg-[#f9f9ff] border border-[#cfdaf1] hover:border-[#485e8a] rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] resize-none"
               />
+              <p className="text-right text-xs font-medium text-[#44474f]">
+                {formData.remarks.length}/100
+              </p>
             </div>
+
+            {/* Alert for submission failure */}
+            {errors.submit && (
+              <div className="p-4 bg-[#ffdad6] text-[#ba1a1a] rounded-lg text-sm font-medium flex items-center space-x-2 border border-[#ffdad6]">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <span>{errors.submit}</span>
+              </div>
+            )}
 
             {/* Call To Action Submit */}
             <div className="pt-2 flex flex-col items-center">
               <button
                 type="submit"
-                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-[#00102d] hover:bg-[#0050cc] text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01]"
+                disabled={submitting}
+                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-[#00102d] hover:bg-[#0050cc] text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="w-4 h-4 rotate-45" />
-                <span>送出訂單</span>
+                <span>{submitting ? "訂單送出中..." : "送出訂單"}</span>
               </button>
             </div>
           </form>
