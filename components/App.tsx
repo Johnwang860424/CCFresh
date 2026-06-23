@@ -16,6 +16,7 @@ import Hero from "./Hero";
 import ProductCard from "./ProductCard";
 import CheckoutForm from "./CheckoutForm";
 import OrderSuccessModal from "./OrderSuccessModal";
+import LineFloatButton from "./LineFloatButton";
 import {
   Product,
   Category,
@@ -434,6 +435,9 @@ export default function App() {
           </p>
         </div>
       </footer>
+
+      {/* Floating LINE add-friend button */}
+      <LineFloatButton />
 
       {/* Order success summary overlay modal */}
       {submittedForm && confirmation && (
