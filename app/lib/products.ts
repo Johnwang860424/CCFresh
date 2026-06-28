@@ -52,7 +52,7 @@ export const getProducts = unstable_cache(
         p.promo_config,
         p.description
       FROM products p
-      ORDER BY p.id
+      ORDER BY p.sort_order, p.id
     `) as ProductRow[];
     return rows.map(toProduct);
   },
