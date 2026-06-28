@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   ShoppingCart,
@@ -8,8 +8,6 @@ import {
   MapPin,
   PhoneCall,
   Timer,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
@@ -83,7 +81,21 @@ export default function App() {
   const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(
     null,
   );
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState<number>(4);
+
+  const gridClass = useMemo(() => {
+    if (columns === 1) {
+      return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 max-w-6xl mx-auto";
+    }
+    if (columns === 2) {
+      return "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto";
+    }
+    if (columns === 3) {
+      return "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto";
+    }
+    // columns === 4
+    return "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto";
+  }, [columns]);
 
   // 使用者尚未手動選分類時，預設顯示第一個分類（改為 render 時推導，避免在 effect 內 setState）。
   const activeCategory = selectedCategory || categories[0]?.key || "";
@@ -98,16 +110,6 @@ export default function App() {
     });
   }, [rawCart, productsData]);
 
-  // Scroll the featured-products carousel by roughly one card width
-  const scrollCarousel = (direction: "prev" | "next") => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const amount = el.clientWidth * 0.85;
-    el.scrollBy({
-      left: direction === "next" ? amount : -amount,
-      behavior: "smooth",
-    });
-  };
 
   // Load cart from LocalStorage on mount
   useEffect(() => {
@@ -123,10 +125,6 @@ export default function App() {
     }
   }, []);
 
-  // Reset carousel to the start when switching categories
-  useEffect(() => {
-    carouselRef.current?.scrollTo({ left: 0 });
-  }, [activeCategory]);
 
   // Save cart to LocalStorage on updates
   const saveCart = (newCart: RawCartItem[]) => {
@@ -289,6 +287,71 @@ export default function App() {
             );
           })()}
 
+          {/* Column Layout Switcher */}
+          <div className="flex justify-end items-center mb-8 max-w-6xl mx-auto px-4 sm:px-0">
+            <div className="flex items-center space-x-1 bg-slate-900/50 p-1 rounded-xl border border-slate-800 backdrop-blur-sm">
+              <span className="text-xs text-slate-400 font-bold px-2.5 select-none font-sans">版面排列：</span>
+              
+              {/* Mobile Controls */}
+              <div className="flex sm:hidden space-x-1">
+                <button
+                  onClick={() => setColumns(1)}
+                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+                    columns === 1
+                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  單欄
+                </button>
+                <button
+                  onClick={() => setColumns(2)}
+                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+                    columns !== 1
+                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  雙欄
+                </button>
+              </div>
+
+              {/* Desktop/Tablet Controls */}
+              <div className="hidden sm:flex space-x-1">
+                <button
+                  onClick={() => setColumns(2)}
+                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+                    columns === 2
+                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  雙欄
+                </button>
+                <button
+                  onClick={() => setColumns(3)}
+                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+                    columns === 3
+                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  三欄
+                </button>
+                <button
+                  onClick={() => setColumns(4)}
+                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+                    columns === 4 || columns === 1
+                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  四欄
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Product Items Responsive Grid */}
           {isProductsLoading ? (
             <div className="text-center py-16 bg-slate-950/40 rounded-2xl border border-slate-900 max-w-lg mx-auto">
@@ -303,45 +366,19 @@ export default function App() {
               </p>
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div className="relative max-w-6xl mx-auto">
-              {/* Prev / Next arrow controls */}
-              <button
-                onClick={() => scrollCarousel("prev")}
-                aria-label="上一個"
-                className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 w-11 h-11 items-center justify-center rounded-full bg-white/95 text-[#00102d] shadow-lg hover:bg-white hover:scale-105 transition-all cursor-pointer"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => scrollCarousel("next")}
-                aria-label="下一個"
-                className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-20 w-11 h-11 items-center justify-center rounded-full bg-white/95 text-[#00102d] shadow-lg hover:bg-white hover:scale-105 transition-all cursor-pointer"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-
-              {/* Scroll-snap carousel track */}
-              <div
-                ref={carouselRef}
-                className="flex gap-6 sm:gap-8 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-[10%] sm:px-4 sm:-mx-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              >
-                {filteredProducts.map((prod) => {
-                  const item = cart.find((c) => c.product.id === prod.id);
-                  return (
-                    <div
-                      key={prod.id}
-                      className="snap-center sm:snap-start shrink-0 flex w-[80%] sm:w-[calc((100%-2rem)/2)] lg:w-[calc((100%-4rem)/3)]"
-                    >
-                      <ProductCard
-                        product={prod}
-                        cartItem={item}
-                        onAddToCart={handleAddToCart}
-                        onRemoveOneFromCart={handleRemoveOneFromCart}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+            <div className={gridClass}>
+              {filteredProducts.map((prod) => {
+                const item = cart.find((c) => c.product.id === prod.id);
+                return (
+                  <ProductCard
+                    key={prod.id}
+                    product={prod}
+                    cartItem={item}
+                    onAddToCart={handleAddToCart}
+                    onRemoveOneFromCart={handleRemoveOneFromCart}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-16 bg-slate-950/40 rounded-2xl border border-slate-900 max-w-lg mx-auto">

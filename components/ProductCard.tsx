@@ -67,7 +67,7 @@ export default function ProductCard({
         )}
 
         {/* Pricing & Cart Action Block */}
-        <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-100">
+        <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-slate-100 gap-2">
           <div className="flex flex-col">
             <span className="text-[10px] text-[#44474f] uppercase font-bold tracking-wider -mb-1">
               會員價
@@ -78,7 +78,7 @@ export default function ProductCard({
           </div>
 
           {/* Animating Action Block with Quick Add Stepper */}
-          <div className="h-10 w-32 flex items-center justify-end">
+          <div className="h-10 w-full sm:w-32 flex items-center justify-start sm:justify-end">
             <AnimatePresence mode="wait">
               {quantity === 0 ? (
                 <motion.button
