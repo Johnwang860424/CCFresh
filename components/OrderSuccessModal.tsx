@@ -159,12 +159,41 @@ export default function OrderSuccessModal({
                   </span>
                 </div>
               ))}
-              <div className="flex justify-between pt-2 border-t border-dashed border-slate-200 text-sm font-bold">
-                <span className="text-[#00102d]">實際應付金額</span>
-                <span className="text-[#0050cc]">
-                  NT$ {totalPrice.toLocaleString()}
-                </span>
-              </div>
+              {isPickup ? (
+                <div className="flex justify-between pt-2 border-t border-dashed border-slate-200 text-sm font-bold">
+                  <span className="text-[#00102d]">實際應付金額</span>
+                  <span className="text-[#0050cc]">
+                    NT$ {totalPrice.toLocaleString()}
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-2 pt-2 border-t border-dashed border-slate-200">
+                  <div className="flex justify-between text-sm font-bold">
+                    <span className="text-[#00102d]">商品金額：</span>
+                    <span className="text-[#0050cc]">
+                      NT$ {totalPrice.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold">
+                    <span className="text-[#00102d]">運費：</span>
+                    <span className="text-amber-600">待客服確認</span>
+                  </div>
+                  <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-100 text-[11px] leading-relaxed text-amber-800 font-medium">
+                    請加入官方{" "}
+                    <a
+                      href="https://line.me/R/ti/p/@cc8888"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-bold text-[#06C755] hover:text-[#05b34c]"
+                    >
+                      官方 LINE
+                    </a>
+                    ，並提供您的訂單編號{" "}
+                    <span className="font-mono font-bold">#{confirmation.id}</span>
+                    ，我們將盡快確認運費並提供匯款資訊
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
