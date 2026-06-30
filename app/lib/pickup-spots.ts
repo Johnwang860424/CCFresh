@@ -12,7 +12,7 @@ export const getPickupSpots = unstable_cache(
     const rows = (await sql`
       SELECT city, township
       FROM pickup_spots
-      ORDER BY city, township
+      ORDER BY city, sort_order, id
     `) as PickupSpotRow[];
     return rows.map((r) => ({ city: r.city, township: r.township }));
   },
