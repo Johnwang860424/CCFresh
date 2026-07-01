@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { CheckCircle2, Navigation, ShoppingBag, X } from "lucide-react";
+import { CheckCircle2, ShoppingBag, X } from "lucide-react";
 import { CartItem, OrderFormData, OrderConfirmation } from "../types";
 import { calcLineSubtotal } from "../app/lib/promotions";
 
@@ -118,14 +118,11 @@ export default function OrderSuccessModal({
                 <span className="text-[#44474f] font-medium">聯絡電話 :</span>
                 <span className="font-bold font-mono">{formData.phone}</span>
               </div>
-              <div className="flex flex-col space-y-1 pt-1">
+              <div className="flex justify-between">
                 <span className="text-[#44474f] font-medium">
                   {isPickup ? "取貨地點 :" : "收件地址 :"}
                 </span>
-                <span className="font-semibold bg-[#f0f3ff] text-[#00102d] px-2.5 py-1.5 rounded border border-[#dee8ff] text-[11px] flex items-center gap-1">
-                  <Navigation className="w-3.5 h-3.5 text-[#0050cc] flex-shrink-0" />
-                  {formData.location}
-                </span>
+                <span className="font-bold">{formData.location}</span>
               </div>
               {formData.remarks && (
                 <div className="flex flex-col space-y-1">

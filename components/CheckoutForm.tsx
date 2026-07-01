@@ -152,8 +152,8 @@ export default function CheckoutForm({
 
     const location =
       formData.deliveryMethod === "pickup"
-        ? `指定地點自取 · ${formData.city}${formData.township}`
-        : `宅配到府 · ${formData.address}`;
+        ? `${formData.city}${formData.township}`
+        : `${formData.address}`;
 
     setSubmitting(true);
     try {
@@ -292,11 +292,10 @@ export default function CheckoutForm({
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="請輸入真實姓名"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${
-                      errors.name
+                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.name
                         ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
                         : "border-[#cfdaf1] hover:border-[#485e8a]"
-                    }`}
+                      }`}
                   />
                 </div>
                 {errors.name && (
@@ -321,11 +320,10 @@ export default function CheckoutForm({
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="09XXXXXXXX"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${
-                      errors.phone
+                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.phone
                         ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
                         : "border-[#cfdaf1] hover:border-[#485e8a]"
-                    }`}
+                      }`}
                   />
                 </div>
                 {errors.phone && (
@@ -357,11 +355,10 @@ export default function CheckoutForm({
                       key={value}
                       type="button"
                       onClick={() => handleMethodChange(value)}
-                      className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border text-sm font-bold transition-all cursor-pointer active:scale-95 ${
-                        active
+                      className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border text-sm font-bold transition-all cursor-pointer active:scale-95 ${active
                           ? "bg-[#00102d] text-white border-[#00102d] shadow-md"
                           : "bg-[#f9f9ff] text-[#44474f] border-[#cfdaf1] hover:border-[#485e8a]"
-                      }`}
+                        }`}
                     >
                       <Icon className="w-4 h-4" />
                       <span>{label}</span>
@@ -395,11 +392,10 @@ export default function CheckoutForm({
                           value={formData.city}
                           onChange={handleCityChange}
                           disabled={spotsLoading}
-                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${
-                            errors.city
+                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${errors.city
                               ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
                               : "border-[#cfdaf1] hover:border-[#485e8a]"
-                          }`}
+                            }`}
                         >
                           <option value="">
                             {spotsLoading ? "載入中..." : "請選擇縣市"}
@@ -435,11 +431,10 @@ export default function CheckoutForm({
                           value={formData.township}
                           onChange={handleInputChange}
                           disabled={!formData.city}
-                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${
-                            errors.township
+                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${errors.township
                               ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
                               : "border-[#cfdaf1] hover:border-[#485e8a]"
-                          }`}
+                            }`}
                         >
                           <option value="">
                             {formData.city ? "請選擇地點" : "請先選擇縣市"}
@@ -485,11 +480,10 @@ export default function CheckoutForm({
                     value={formData.address}
                     onChange={handleInputChange}
                     placeholder="請輸入完整收件地址"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${
-                      errors.address
+                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.address
                         ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
                         : "border-[#cfdaf1] hover:border-[#485e8a]"
-                    }`}
+                      }`}
                   />
                   {errors.address && (
                     <p className="text-xs font-bold text-[#ba1a1a]">
