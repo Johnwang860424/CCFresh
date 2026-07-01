@@ -156,36 +156,3 @@ export function calcLineSubtotal(
   }
   return strategy.subtotal(promo.config, unitPrice, quantity);
 }
-
-export interface NormalizedPromo {
-  promoType: string | null;
-  promoConfig: PromoConfig | null;
-}
-
-/**
- * 驗證並正規化優惠設定。type 為空視為無優惠（type/config 皆為 null = 等同停用）。
- * 框架無關：失敗回傳 { error }，由呼叫端決定如何回應。
- */
-export function validatePromo(
-  type: unknown,
-  config: unknown,
-): NormalizedPromo | { error: string } {
-  if (type === null || type === undefined || type === "") {
-    return { promoType: null, promoConfig: null };
-  }
-  if (typeof type !== "string") {
-    return { error: "無效的優惠方式" };
-  }
-  const strategy = getPromoStrategy(type);
-  if (!strategy) {
-    return { error: "無效的優惠方式" };
-  }
-  const result = strategy.validate(config);
-  if ("error" in result) {
-    return result;
-  }
-  return {
-    promoType: type,
-    promoConfig: result.config,
-  };
-}

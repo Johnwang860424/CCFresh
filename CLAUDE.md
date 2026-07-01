@@ -29,7 +29,9 @@ Data flows DB → server data layer → API route → client. There is no server
 **Data layer (`app/lib/`)** — server-only modules wrapping SQL:
 - `db.ts` — single `sql` export (Neon HTTP driver). Always query via its tagged-template form so values are parameterized.
 - `products.ts`, `categories.ts`, `pickup-spots.ts` — each exports a read function wrapped in `unstable_cache` with a cache tag (`"products"`, `"categories"`, `"pickup-spots"`). Results are cached until the tag is revalidated.
-- `orders.ts` — `createOrder()`: the order-placement core (validation + write). Not cached.
+- `orders.ts` — `createOrder()`: the order-placement core (validation + write) for both delivery methods (`pickup` / `delivery`). Not cached.
+
+Read functions embed the app's display order in SQL: products `ORDER BY sort_order, id`; pickup spots `ORDER BY city, sort_order, id`.
 
 **API routes (`app/api/*/route.ts`)**
 - GET `products` / `categories` / `pickup-spots` — thin wrappers; use `jsonHandler()` from `app/lib/api.ts` to centralize the try/catch → 500.
@@ -46,7 +48,8 @@ Data flows DB → server data layer → API route → client. There is no server
 - **DB ids are integers; the app uses strings.** Data-layer mappers convert (`String(row.id)`), and `createOrder` converts back with `Number(...)`.
 - **Path alias** `@/*` maps to the repo root (e.g. `@/app/lib/db`, `@/types`).
 - Shared types are in `types.ts` (root); `ProductPromo`/`PromoConfig` types live in `promotions.ts`.
-- Pickup orders get a per-spot incrementing `pickup_number`; concurrent inserts may hit the `(pickup_spot_id, pickup_number)` unique constraint and are retried.
+- **Two delivery methods.** `pickup` requires a `(city, township)` resolving to a `pickup_spots` row; `delivery` requires a free-text `shipping_address`. `createOrder` branches on `deliveryMethod` for both validation and the insert.
+- **`pickup_number` is the customer-facing order number for both methods** (the DB auto-id is never exposed). Pickup: max+1 scoped per spot, guarded by the `(pickup_spot_id, pickup_number)` unique constraint and retried on conflict. Delivery: `pickup_spot_id` is NULL and the number is max+1 across all delivery orders — NULL escapes that unique constraint, so the same retry runs but cannot fully prevent duplicate numbers under high concurrency (accepted trade-off).
 
 ## Design
 
