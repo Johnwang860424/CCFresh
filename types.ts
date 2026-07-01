@@ -57,7 +57,6 @@ export interface PlaceOrderRequest {
 
 /** 建單成功後回傳給前端的確認資料。 */
 export interface OrderConfirmation {
-  id: number;
   total: number;
   deliveryMethod: DeliveryMethod;
   pickupNumber: number;

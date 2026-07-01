@@ -164,7 +164,6 @@ export async function createOrder(
 
   return {
     order: {
-      id: order.id,
       total,
       deliveryMethod,
       pickupNumber: order.pickupNumber,

@@ -22,8 +22,6 @@ export default function OrderSuccessModal({
 }: OrderSuccessModalProps) {
   const totalPrice = confirmation.total;
   const isPickup = confirmation.deliveryMethod === "pickup";
-  // 對顧客顯示的訂單編號：優先用配發的號碼（自取號碼牌／宅配流水號），退回 DB id。
-  const orderNumber = confirmation.pickupNumber ?? confirmation.id;
 
   if (!isOpen) return null;
 
@@ -81,8 +79,8 @@ export default function OrderSuccessModal({
             </p>
           </div>
 
-          {/* 取貨號碼牌：自取訂單最重要的資訊，獨立強調 */}
-          {isPickup && (
+          {/* 取貨號碼牌 / LINE客服資訊：依取貨方式獨立強調 */}
+          {isPickup ? (
             <div className="bg-[#fff3e6] border border-[#ffd9b0] rounded-xl p-4 flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-[11px] font-black uppercase tracking-wider text-[#ad5b00]">
@@ -96,19 +94,39 @@ export default function OrderSuccessModal({
                 {confirmation.pickupNumber}
               </span>
             </div>
+          ) : (
+            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4 flex items-center justify-between">
+              <div className="flex flex-col space-y-1 max-w-[65%]">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#166534]">
+                  聯絡官方 LINE 客服
+                </span>
+                <p className="text-[10px] text-[#166534]/80 font-medium leading-relaxed">
+                  請加入 LINE 並提供訂單編號，客服將儘速為您確認運費並提供匯款帳號。
+                </p>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-2 bg-white/50 px-3 py-2 rounded-lg border border-[#06C755]/10 shadow-sm">
+                <div className="text-center">
+                  <span className="text-[9px] uppercase tracking-wider text-[#166534]/60 font-bold block">
+                    訂單編號
+                  </span>
+                  <span className="text-xl font-black font-mono text-[#166534] leading-none">
+                    {confirmation.pickupNumber}
+                  </span>
+                </div>
+                <a
+                  href="https://line.me/R/ti/p/@cc8888"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white text-[10px] font-bold rounded-md transition-all active:scale-95 text-center whitespace-nowrap shadow-sm"
+                >
+                  加入 LINE
+                </a>
+              </div>
+            </div>
           )}
 
           {/* Receipt Summary Card */}
           <div className="border border-[#dee8ff] rounded-xl p-5 space-y-4 bg-white shadow-sm">
-            <div className="flex justify-between items-center pb-3 border-b border-[#e7eeff]">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#44474f]">
-                訂單編號
-              </span>
-              <span className="text-sm font-black font-mono text-[#0050cc]">
-                #{orderNumber}
-              </span>
-            </div>
-
             <div className="space-y-2 text-xs text-[#111c2c] font-sans">
               <div className="flex justify-between">
                 <span className="text-[#44474f] font-medium">收貨姓名 :</span>
@@ -176,20 +194,6 @@ export default function OrderSuccessModal({
                   <div className="flex justify-between text-sm font-bold">
                     <span className="text-[#00102d]">運費：</span>
                     <span className="text-amber-600">待客服確認</span>
-                  </div>
-                  <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-100 text-[11px] leading-relaxed text-amber-800 font-medium">
-                    請加入官方{" "}
-                    <a
-                      href="https://line.me/R/ti/p/@cc8888"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline font-bold text-[#06C755] hover:text-[#05b34c]"
-                    >
-                      官方 LINE
-                    </a>
-                    ，並提供您的訂單編號{" "}
-                    <span className="font-mono font-bold">#{orderNumber}</span>
-                    ，我們將盡快確認運費並提供匯款資訊
                   </div>
                 </div>
               )}
