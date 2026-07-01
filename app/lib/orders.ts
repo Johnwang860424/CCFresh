@@ -158,7 +158,7 @@ export async function createOrder(
       `;
     }
   } catch (err) {
-    await sql`DELETE FROM orders WHERE id = ${order.id}`.catch(() => {});
+    await sql`DELETE FROM orders WHERE id = ${order.id}`.catch(() => { });
     throw err;
   }
 
@@ -184,34 +184,37 @@ interface InsertOrderArgs {
 
 async function insertOrder(
   args: InsertOrderArgs,
-): Promise<{ id: number; pickupNumber: number | null }> {
-  if (args.deliveryMethod === "delivery") {
-    const rows = (await sql`
-      INSERT INTO orders
-        (customer_name, phone, delivery_method, shipping_address, note, total)
-      VALUES
-        (${args.customerName}, ${args.phone}, 'delivery',
-         ${args.shippingAddress}, ${args.note}, ${args.total})
-      RETURNING id, pickup_number
-    `) as { id: number; pickup_number: number | null }[];
-    return { id: rows[0].id, pickupNumber: rows[0].pickup_number };
-  }
-
-  // pickup_number = 該取貨點目前最大值 + 1；併發時可能撞 (pickup_spot_id, pickup_number)
-  // 唯一鍵，捕捉後重試。
+): Promise<{ id: number, pickupNumber: number }> {
+  // 兩種取貨方式都配發 pickup_number 作為對顧客的訂單號碼，不外露資料庫自增 id：
+  // - 自取：該取貨點目前最大值 + 1，撞 (pickup_spot_id, pickup_number) 唯一鍵時重試。
+  // - 宅配：pickup_spot_id 為 NULL，取所有宅配訂單目前最大值 + 1。因 NULL 不受該唯一鍵
+  //   約束，高併發下仍可能重號，沿用相同 retry（但無法完全擋住），屬可接受的取捨。
   for (let attempt = 0; attempt < PICKUP_NUMBER_RETRIES; attempt++) {
     try {
-      const rows = (await sql`
-        INSERT INTO orders
-          (customer_name, phone, delivery_method, pickup_spot_id,
-           pickup_number, note, total)
-        VALUES
-          (${args.customerName}, ${args.phone}, 'pickup', ${args.pickupSpotId},
-           (SELECT COALESCE(MAX(pickup_number), 0) + 1
-              FROM orders WHERE pickup_spot_id = ${args.pickupSpotId}),
-           ${args.note}, ${args.total})
-        RETURNING id, pickup_number
-      `) as { id: number; pickup_number: number | null }[];
+      const rows = (await (args.deliveryMethod === "delivery"
+        ? sql`
+            INSERT INTO orders
+              (customer_name, phone, delivery_method, shipping_address,
+               pickup_number, note, total)
+            VALUES
+              (${args.customerName}, ${args.phone}, 'delivery',
+               ${args.shippingAddress},
+               (SELECT COALESCE(MAX(pickup_number), 0) + 1
+                  FROM orders WHERE pickup_spot_id IS NULL),
+               ${args.note}, ${args.total})
+            RETURNING id, pickup_number
+          `
+        : sql`
+            INSERT INTO orders
+              (customer_name, phone, delivery_method, pickup_spot_id,
+               pickup_number, note, total)
+            VALUES
+              (${args.customerName}, ${args.phone}, 'pickup', ${args.pickupSpotId},
+               (SELECT COALESCE(MAX(pickup_number), 0) + 1
+                  FROM orders WHERE pickup_spot_id = ${args.pickupSpotId}),
+               ${args.note}, ${args.total})
+            RETURNING id, pickup_number
+          `)) as { id: number; pickup_number: number }[];
       return { id: rows[0].id, pickupNumber: rows[0].pickup_number };
     } catch (err) {
       if (isUniqueViolation(err) && attempt < PICKUP_NUMBER_RETRIES - 1) {
@@ -221,5 +224,5 @@ async function insertOrder(
     }
   }
   // 不會到這（迴圈內非 return 即 throw），滿足型別檢查。
-  throw new Error("無法配發取貨號碼，請重試");
+  throw new Error("無法配發訂單號碼，請重試");
 }

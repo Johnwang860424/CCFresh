@@ -60,6 +60,5 @@ export interface OrderConfirmation {
   id: number;
   total: number;
   deliveryMethod: DeliveryMethod;
-  // 取貨號碼牌（宅配為 null）。
-  pickupNumber: number | null;
+  pickupNumber: number;
 }

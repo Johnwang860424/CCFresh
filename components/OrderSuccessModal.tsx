@@ -21,7 +21,9 @@ export default function OrderSuccessModal({
   cart,
 }: OrderSuccessModalProps) {
   const totalPrice = confirmation.total;
-  const isPickup = confirmation.pickupNumber !== null;
+  const isPickup = confirmation.deliveryMethod === "pickup";
+  // 對顧客顯示的訂單編號：優先用配發的號碼（自取號碼牌／宅配流水號），退回 DB id。
+  const orderNumber = confirmation.pickupNumber ?? confirmation.id;
 
   if (!isOpen) return null;
 
@@ -103,7 +105,7 @@ export default function OrderSuccessModal({
                 訂單編號
               </span>
               <span className="text-sm font-black font-mono text-[#0050cc]">
-                #{confirmation.id}
+                #{orderNumber}
               </span>
             </div>
 
@@ -189,7 +191,7 @@ export default function OrderSuccessModal({
                       官方 LINE
                     </a>
                     ，並提供您的訂單編號{" "}
-                    <span className="font-mono font-bold">#{confirmation.id}</span>
+                    <span className="font-mono font-bold">#{orderNumber}</span>
                     ，我們將盡快確認運費並提供匯款資訊
                   </div>
                 </div>
