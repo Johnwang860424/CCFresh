@@ -55,7 +55,7 @@ export default function ProductCard({
       {/* Product Image Stage */}
       <div 
         onClick={() => setIsZoomed(true)}
-        className="relative aspect-4/3 w-full bg-[#f0f3ff] overflow-hidden cursor-zoom-in group/image"
+        className="relative aspect-[3/4] w-full bg-[#f0f3ff] overflow-hidden cursor-zoom-in group/image"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
