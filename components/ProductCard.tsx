@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Minus, TrendingDown } from "lucide-react";
+import { Plus, Minus, TrendingDown, ShoppingCart, X, ZoomIn } from "lucide-react";
 import { Product, CartItem } from "../types";
 
 interface ProductCardProps {
@@ -19,6 +20,23 @@ export default function ProductCard({
   onRemoveOneFromCart,
 }: ProductCardProps) {
   const quantity = cartItem ? cartItem.quantity : 0;
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  useEffect(() => {
+    if (isZoomed) {
+      document.body.style.overflow = "hidden";
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setIsZoomed(false);
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [isZoomed]);
 
   // Promo badge (only rendered when the product carries a promo summary)
   const renderBadge = () => {
@@ -35,7 +53,19 @@ export default function ProductCard({
   return (
     <div className="w-full h-full bg-white rounded-xl border border-[#dee8ff] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#cfdaf1] transition-all duration-300 flex flex-col group relative">
       {/* Product Image Stage */}
-      <div className="relative aspect-4/3 w-full bg-[#f0f3ff] overflow-hidden">
+      <div 
+        onClick={() => setIsZoomed(true)}
+        className="relative aspect-4/3 w-full bg-[#f0f3ff] overflow-hidden cursor-zoom-in group/image"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            setIsZoomed(true);
+            e.preventDefault();
+          }
+        }}
+        aria-label={`放大查看 ${product.name} 圖片`}
+      >
         {renderBadge()}
 
         <Image
@@ -46,6 +76,14 @@ export default function ProductCard({
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           referrerPolicy="no-referrer"
         />
+        
+        {/* Zoom Overlay Hover Effect */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
+          <div className="bg-white/95 text-[#00102d] rounded-full p-2.5 shadow-lg transform scale-90 group-hover/image:scale-100 transition-transform duration-300 flex items-center justify-center">
+            <ZoomIn className="w-5 h-5" />
+          </div>
+        </div>
+
         {/* Subtle ice shimmer effect on hover */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       </div>
@@ -88,9 +126,9 @@ export default function ProductCard({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
                   onClick={() => onAddToCart(product)}
-                  className="w-full h-9 bg-white text-[#0050cc] hover:bg-[#e7eeff] border border-[#cfdaf1] hover:border-[#0050cc] rounded-full text-xs font-bold leading-none cursor-pointer transition-all duration-200 flex items-center justify-center space-x-1 shadow-sm active:scale-95 py-2.5 px-3"
+                  className="w-full h-9 bg-[#ef6c00] text-white hover:bg-[#d84315] rounded-full text-xs font-bold leading-none cursor-pointer transition-all duration-200 flex items-center justify-center space-x-1 shadow-sm active:scale-95 py-2.5 px-3"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <ShoppingCart className="w-3.5 h-3.5" />
                   <span>加入購物車</span>
                 </motion.button>
               ) : (
@@ -130,6 +168,68 @@ export default function ProductCard({
           </div>
         </div>
       </div>
+
+      {/* Lightbox / Image Zoom Overlay */}
+      <AnimatePresence>
+        {isZoomed && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop overlay with blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsZoomed(false)}
+              className="absolute inset-0 bg-[#00102d]/90 backdrop-blur-md cursor-zoom-out"
+            />
+
+            {/* Content Container */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="relative max-w-4xl w-full max-h-[85vh] flex flex-col items-center justify-center z-10 pointer-events-none"
+            >
+              {/* Image Frame */}
+              <div className="relative w-full h-[60vh] sm:h-[70vh] pointer-events-auto rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-[#02050c]/50">
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 1280px) 95vw, 1200px"
+                  className="object-contain"
+                  referrerPolicy="no-referrer"
+                  priority
+                />
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setIsZoomed(false)}
+                className="absolute top-4 right-4 bg-[#00102d]/80 hover:bg-[#ef6c00] text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer pointer-events-auto active:scale-95 flex items-center justify-center"
+                aria-label="Close image zoom"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Info panel below the lightbox */}
+              <div className="mt-4 px-6 py-3 bg-[#00102d]/80 backdrop-blur-sm rounded-xl border border-white/10 text-center max-w-md pointer-events-auto shadow-xl flex flex-col items-center">
+                <p className="text-white text-sm font-black tracking-wide font-sans">
+                  {product.name}
+                </p>
+                {product.weight && (
+                  <p className="text-[11px] text-[#bebfe1] font-semibold font-sans mt-1">
+                    {product.weight}
+                  </p>
+                )}
+                <p className="text-xs text-[#ef6c00] font-black font-sans mt-1">
+                  NT$ {product.price.toLocaleString()}
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
