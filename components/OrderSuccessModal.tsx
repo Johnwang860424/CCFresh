@@ -184,16 +184,25 @@ export default function OrderSuccessModal({
                   </span>
                 </div>
               ) : (
-                <div className="space-y-2 pt-2 border-t border-dashed border-slate-200">
+                <div className="space-y-3 pt-2 border-t border-dashed border-slate-200">
                   <div className="flex justify-between text-sm font-bold">
                     <span className="text-[#00102d]">商品金額：</span>
                     <span className="text-[#0050cc]">
                       NT$ {totalPrice.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm font-bold">
-                    <span className="text-[#00102d]">運費：</span>
-                    <span className="text-amber-600">待客服確認</span>
+                  <div className="pt-2 border-t border-dashed border-slate-200 space-y-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                      運費資訊
+                    </span>
+                    <div className="flex justify-between text-xs font-bold text-slate-600">
+                      <span>711店到店 (10公斤)</span>
+                      <span className="text-amber-600 font-mono">NT$ 150</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold text-slate-600">
+                      <span>宅配 (20公斤)</span>
+                      <span className="text-amber-600 font-mono">NT$ 250</span>
+                    </div>
                   </div>
                 </div>
               )}
