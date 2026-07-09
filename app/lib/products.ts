@@ -7,7 +7,7 @@ interface ProductRow {
   id: number;
   name: string;
   price: number;
-  image_url: string;
+  images: string[];
   category_id: number;
   spec: string | null;
   promo_type: string | null;
@@ -22,12 +22,13 @@ function toProduct(row: ProductRow): Product {
   const promoConfig = (row.promo_config as PromoConfig | null) ?? null;
   const promoSummary =
     strategy && promoConfig ? strategy.describe(promoConfig) : null;
+  const images = row.images ?? [];
   return {
     id: String(row.id),
     name: row.name,
     weight: row.spec ?? "",
     price: row.price,
-    image: row.image_url,
+    images: images,
     badge: promoSummary,
     category: row.category_id ? String(row.category_id) : "",
     description: row.description ?? "",
@@ -45,12 +46,19 @@ export const getProducts = unstable_cache(
         p.id,
         p.name,
         p.price,
-        p.image_url,
         p.category_id,
         p.spec,
         p.promo_type,
         p.promo_config,
-        p.description
+        p.description,
+        COALESCE(
+          (
+            SELECT json_agg(pi.image_url ORDER BY pi.sort_order, pi.id)
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+          ),
+          '[]'::json
+        ) AS images
       FROM products p
       ORDER BY p.sort_order, p.id
     `) as ProductRow[];
