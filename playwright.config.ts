@@ -20,13 +20,13 @@ export default defineConfig({
     {
       name: "ios",
       use: { ...devices["iPhone 14"], browserName: "chromium" },
-      // manifest 測試與裝置無關，只在 desktop project 跑一次
-      testIgnore: /manifest/,
+      // manifest / order-info-autofill 測試與裝置無關，只在 desktop project 跑一次
+      testIgnore: /manifest|order-info-autofill/,
     },
     {
       name: "android",
       use: { ...devices["Pixel 7"] },
-      testIgnore: /manifest/,
+      testIgnore: /manifest|order-info-autofill/,
     },
     {
       name: "desktop",
