@@ -43,7 +43,16 @@ export function loadSavedOrderInfo(): SavedOrderInfo | null
 
 使用者會看到地點欄回到「請選擇」，送出時的既有 validation 照常擋下未選地點。此設計與購物車「對帳丟掉下架商品」的精神一致。
 
-## 4. 錯誤處理
+## 4. 互動視覺規格
+
+本功能**不新增任何 UI 元素**（無提示列、無清除按鈕），只改變既有表單欄位的初始值：
+
+- **帶入呈現**：欄位直接以預填值渲染，使用既有 input/select/textarea 樣式，無高亮、無動畫、無 toast。取貨方式按鈕依帶入的 `deliveryMethod` 呈現既有的 active 樣式（`bg-[#00102d]` 深底白字）。
+- **帶入時機**：mount 後的 effect 填入。首屏（SSR/首次 render）為空白值，帶入發生在 hydration 後極短時間內，正常情況下使用者無感；不做 skeleton 或 loading 狀態。
+- **下架地點清空**：欄位回到既有的空狀態（select 顯示「請選擇縣市」/「請選擇地點」placeholder option），無額外提示文案——與使用者第一次來的畫面相同。
+- **備註字數計數**：帶入備註後，既有的 `{remarks.length}/100` 計數即時反映帶入內容長度（現有綁定自然成立，不需額外處理）。
+
+## 5. 錯誤處理
 
 | 情境 | 行為 |
 |------|------|
@@ -53,7 +62,7 @@ export function loadSavedOrderInfo(): SavedOrderInfo | null
 | 存的取貨地點已下架 | 只清空地點欄位，其餘照帶 |
 | 下單失敗（4xx/5xx） | 不寫入，既有資料保留 |
 
-## 5. 測試（Playwright e2e）
+## 6. 測試（Playwright e2e）
 
 依既有 e2e 慣例：真實 dev server + `.env.local` 測試庫（會寫入真實訂單），下單一律用宅配（不依賴 `pickup_spots` 資料）；`beforeEach` 清 `cc_fresh_order_info`（比照既有測試清 `cc_fresh_cart`）。
 
