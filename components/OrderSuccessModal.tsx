@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { CheckCircle2, ShoppingBag, X } from "lucide-react";
 import { CartItem, OrderFormData, OrderConfirmation } from "../types";
 import { calcLineSubtotal } from "../app/lib/promotions";
+import PwaInstallPrompt from "./PwaInstallPrompt";
 
 interface OrderSuccessModalProps {
   isOpen: boolean;
@@ -62,6 +63,9 @@ export default function OrderSuccessModal({
         </div>
 
         <div className="p-6 overflow-y-auto space-y-6">
+          {/* 加入手機桌面引導（僅行動裝置且非 standalone 顯示） */}
+          <PwaInstallPrompt />
+
           {/* Success banner */}
           <div className="flex flex-col items-center text-center space-y-2 pt-2">
             <motion.div

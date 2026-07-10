@@ -11,7 +11,8 @@ CC 生鮮 (CC Fresh) — a single-page frozen-food ordering site. Next.js 16 (Ap
 - `npm run dev` — dev server at http://localhost:3000
 - `npm run build` — production build
 - `npm run start` — serve production build
-- `npm run lint` — ESLint (flat config, `eslint.config.mjs`; no separate test suite exists)
+- `npm run lint` — ESLint (flat config, `eslint.config.mjs`)
+- `npm run test:e2e` — Playwright e2e (`e2e/`, projects: ios / android / desktop). Tests place REAL orders through the dev server into the `.env.local` `DATABASE_URL`. A global-setup guard (`e2e/global-setup.ts`) refuses to run unless the DB host is in its `ALLOWED_TEST_DB_HOSTS` allowlist — add the new host there when the test database changes. There is no row cleanup.
 
 ## Environment
 
