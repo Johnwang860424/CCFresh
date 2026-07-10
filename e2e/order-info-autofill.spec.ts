@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { ORDER_INFO_STORAGE_KEY as KEY } from "../app/lib/order-info-storage";
+import { placeDeliveryOrder } from "./helpers";
 
 // 覆蓋 openspec specs/order-info-autofill：下單成功後記住訂購資料，開站自動帶入。
 // 走真實 dev server + 測試庫（.env.local），下單一律用宅配（不依賴 pickup_spots 資料）。
@@ -17,17 +18,10 @@ test.beforeEach(async ({ page }) => {
 
 test("宅配下單成功後 reload 自動帶入全部欄位", async ({ page }) => {
   // Scenario: 宅配下單成功 + 有已存資料
-  await page.goto("/");
-  await page.getByRole("button", { name: "加入購物車" }).first().click();
-
-  await page.locator('input[name="name"]').fill("E2E 記憶測試");
-  await page.locator('input[name="phone"]').fill("0912345678");
-  await page.getByRole("button", { name: "宅配到府" }).click();
-  await page.locator('input[name="address"]').fill("台北市中正區測試路 1 號");
-  await page.locator('textarea[name="remarks"]').fill("E2E 備註");
-  await page.getByRole("button", { name: "送出訂單" }).click();
-
-  await expect(page.getByText("訂單已成立")).toBeVisible({ timeout: 15_000 });
+  await placeDeliveryOrder(page, {
+    name: "E2E 記憶測試",
+    remarks: "E2E 備註",
+  });
 
   await page.reload();
 
