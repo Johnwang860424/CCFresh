@@ -61,3 +61,24 @@ export interface OrderConfirmation {
   deliveryMethod: DeliveryMethod;
   pickupNumber: number;
 }
+
+/** 電話查詢訂單：單筆品項（寫入當下的快照，非最新目錄）。 */
+export interface LookupOrderItem {
+  name: string;
+  quantity: number;
+  subtotal: number;
+}
+
+/** 電話查詢訂單：回傳給前端的單筆訂單。 */
+export interface LookupOrder {
+  id: string;
+  pickupNumber: number;
+  customerName: string;
+  deliveryMethod: DeliveryMethod;
+  /** 自取＝縣市＋取貨點；宅配＝收件地址。 */
+  location: string;
+  items: LookupOrderItem[];
+  total: number;
+  note: string | null;
+  createdAt: string;
+}
