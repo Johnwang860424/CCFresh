@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Minus, TrendingDown, ShoppingCart, X, ZoomIn, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -25,12 +25,31 @@ export default function ProductCard({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoomedImageIndex, setZoomedImageIndex] = useState(0);
 
-  // When zoomedImageIndex changes inside zoomed view, trigger loading spinner
-  useEffect(() => {
-    if (isZoomed) {
-      setIsLargeImageLoading(true);
-    }
-  }, [zoomedImageIndex, isZoomed]);
+  // 換圖時開 loading spinner 由各事件處理器負責：同一張圖 src 不變、
+  // onLoad 不會再觸發，所以只有真的換圖才能重置 spinner，否則會卡住。
+  const showZoomedImage = (index: number) => {
+    if (index !== zoomedImageIndex) setIsLargeImageLoading(true);
+    setZoomedImageIndex(index);
+  };
+
+  // 鍵盤處理器閉包內的 zoomedImageIndex 可能過期，改用 functional updater 循環換圖
+  const stepZoomedImage = useCallback(
+    (delta: 1 | -1) => {
+      if (product.images.length > 1) setIsLargeImageLoading(true);
+      setZoomedImageIndex(
+        (prev) =>
+          (prev + delta + product.images.length) % product.images.length,
+      );
+    },
+    [product.images.length],
+  );
+
+  // 放大檢視關閉即卸載、重開必重掛 Image（onLoad 必再觸發），開啟時一律重置 spinner
+  const openZoom = (index: number) => {
+    setIsLargeImageLoading(true);
+    setZoomedImageIndex(index);
+    setIsZoomed(true);
+  };
 
   useEffect(() => {
     if (isZoomed) {
@@ -39,13 +58,9 @@ export default function ProductCard({
         if (e.key === "Escape") {
           setIsZoomed(false);
         } else if (e.key === "ArrowLeft") {
-          setZoomedImageIndex((prev) =>
-            prev === 0 ? product.images.length - 1 : prev - 1
-          );
+          stepZoomedImage(-1);
         } else if (e.key === "ArrowRight") {
-          setZoomedImageIndex((prev) =>
-            prev === product.images.length - 1 ? 0 : prev + 1
-          );
+          stepZoomedImage(1);
         }
       };
       window.addEventListener("keydown", handleKeyDown);
@@ -54,7 +69,7 @@ export default function ProductCard({
         window.removeEventListener("keydown", handleKeyDown);
       };
     }
-  }, [isZoomed, product.images.length]);
+  }, [isZoomed, stepZoomedImage]);
 
   // Promo badge (only rendered when the product carries a promo summary)
   const renderBadge = () => {
@@ -72,17 +87,13 @@ export default function ProductCard({
     <div className="w-full h-full bg-white rounded-xl border border-[#dee8ff] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#cfdaf1] transition-all duration-300 flex flex-col group relative">
       {/* Product Image Stage */}
       <div 
-        onClick={() => {
-          setZoomedImageIndex(currentImageIndex);
-          setIsZoomed(true);
-        }}
+        onClick={() => openZoom(currentImageIndex)}
         className="relative aspect-[3/4] w-full bg-[#f0f3ff] overflow-hidden cursor-zoom-in group/image"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            setZoomedImageIndex(currentImageIndex);
-            setIsZoomed(true);
+            openZoom(currentImageIndex);
             e.preventDefault();
           }
         }}
@@ -299,11 +310,7 @@ export default function ProductCard({
                 {product.images && product.images.length > 1 && (
                   <>
                     <button
-                      onClick={() =>
-                        setZoomedImageIndex((prev) =>
-                          prev === 0 ? product.images.length - 1 : prev - 1
-                        )
-                      }
+                      onClick={() => stepZoomedImage(-1)}
                       className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-[#ef6c00] text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer active:scale-95 flex items-center justify-center"
                       aria-label="Previous image"
                     >
@@ -311,11 +318,7 @@ export default function ProductCard({
                     </button>
 
                     <button
-                      onClick={() =>
-                        setZoomedImageIndex((prev) =>
-                          prev === product.images.length - 1 ? 0 : prev + 1
-                        )
-                      }
+                      onClick={() => stepZoomedImage(1)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-[#ef6c00] text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer active:scale-95 flex items-center justify-center"
                       aria-label="Next image"
                     >
@@ -340,7 +343,7 @@ export default function ProductCard({
                   {product.images.map((imgUrl, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setZoomedImageIndex(idx)}
+                      onClick={() => showZoomedImage(idx)}
                       className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 cursor-pointer transition-all active:scale-95 flex-shrink-0 bg-slate-900 ${
                         idx === zoomedImageIndex
                           ? "border-[#ef6c00] scale-105 shadow-md"
