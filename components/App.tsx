@@ -13,6 +13,7 @@ import Navbar from "./Navbar";
 import Hero from "./Hero";
 import ProductCard from "./ProductCard";
 import CheckoutForm from "./CheckoutForm";
+import OrderLookup from "./OrderLookup";
 import OrderSuccessModal from "./OrderSuccessModal";
 import LineFloatButton from "./LineFloatButton";
 import {
@@ -418,6 +419,9 @@ export default function App() {
         onRemoveItem={handleRemoveItem}
         onSubmitOrder={handleSubmitOrder}
       />
+
+      {/* Order lookup by phone section */}
+      <OrderLookup />
 
       {/* Elegant minimalist footer */}
       <footer className="bg-[#00102d] text-white/50 text-[11px] py-10 text-center border-t border-[#dee8ff]/10 font-medium font-sans">

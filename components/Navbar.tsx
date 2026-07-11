@@ -33,6 +33,13 @@ export default function Navbar({
     }
   };
 
+  const handleLookupClick = () => {
+    setMobileMenuOpen(false);
+    document
+      .getElementById("order-lookup")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-[#e7eeff]/90 backdrop-blur-md border-b border-[#cfdaf1] transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -81,6 +88,14 @@ export default function Navbar({
                 </button>
               );
             })}
+
+            {/* 查詢訂單：捲動到查詢區塊，非分類、無 active 狀態 */}
+            <button
+              onClick={handleLookupClick}
+              className="relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none text-[#44474f] hover:text-[#00102d]"
+            >
+              查詢訂單
+            </button>
           </div>
 
           {/* Right Icons */}
@@ -133,6 +148,14 @@ export default function Navbar({
               </button>
             );
           })}
+
+          {/* 查詢訂單：捲動到查詢區塊並收合選單 */}
+          <button
+            onClick={handleLookupClick}
+            className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all text-[#44474f] hover:bg-[#f9f9ff] hover:text-[#00102d]"
+          >
+            查詢訂單
+          </button>
         </div>
       )}
     </nav>

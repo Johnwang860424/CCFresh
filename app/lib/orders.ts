@@ -1,8 +1,12 @@
 import { sql } from "@/app/lib/db";
 import { getProducts } from "@/app/lib/products";
 import { calcLineSubtotal } from "@/app/lib/promotions";
-import { isValidTwMobile } from "@/app/lib/validation";
-import type { OrderConfirmation, PlaceOrderRequest } from "@/types";
+import { isValidTwMobile, normalizePhone } from "@/app/lib/validation";
+import type {
+  LookupOrder,
+  OrderConfirmation,
+  PlaceOrderRequest,
+} from "@/types";
 
 // 單一品項數量上限，擋住明顯異常/惡意的輸入。
 const MAX_QUANTITY = 999;
@@ -136,7 +140,8 @@ export async function createOrder(
   // 建單：取貨單需在同一取貨點內遞增號碼牌，撞唯一鍵時重試。
   const order = await insertOrder({
     customerName,
-    phone,
+    // 統一存純數字格式；既有未正規化的舊資料由查詢端比對涵蓋。
+    phone: normalizePhone(phone),
     deliveryMethod,
     pickupSpotId,
     shippingAddress,
@@ -207,4 +212,83 @@ async function insertOrder(
   }
   // 不會到這（迴圈內非 return 即 throw），滿足型別檢查。
   throw new Error("無法配發訂單號碼，請重試");
+}
+
+interface LookupRow {
+  id: number;
+  pickup_number: number;
+  customer_name: string;
+  delivery_method: "pickup" | "delivery";
+  shipping_address: string | null;
+  note: string | null;
+  total: number;
+  created_at: string | Date;
+  city: string | null;
+  township: string | null;
+  items: { name: string; quantity: number; subtotal: number }[];
+}
+
+function toLookupOrder(row: LookupRow): LookupOrder {
+  return {
+    id: String(row.id),
+    pickupNumber: row.pickup_number,
+    customerName: row.customer_name,
+    deliveryMethod: row.delivery_method,
+    location:
+      row.delivery_method === "pickup"
+        ? `${row.city ?? ""}${row.township ?? ""}`
+        : (row.shipping_address ?? ""),
+    items: row.items.map((item) => ({
+      name: item.name,
+      quantity: Number(item.quantity),
+      subtotal: Number(item.subtotal),
+    })),
+    total: Number(row.total),
+    note: row.note,
+    createdAt: new Date(row.created_at).toISOString(),
+  };
+}
+
+/**
+ * 依電話查詢該電話的全部訂單（新到舊），含品項快照與取貨點名稱。
+ * 訂單須即時，不走 unstable_cache。
+ * 比對兩邊都正規化：既有資料寫入時未正規化，可能存有空白／連字號格式。
+ */
+export async function findOrdersByPhone(
+  rawPhone: string,
+): Promise<LookupOrder[]> {
+  const phone = normalizePhone(rawPhone);
+  const rows = (await sql`
+    SELECT
+      o.id,
+      o.pickup_number,
+      o.customer_name,
+      o.delivery_method,
+      o.shipping_address,
+      o.note,
+      o.total,
+      o.created_at,
+      ps.city,
+      ps.township,
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'name', oi.product_name,
+              'quantity', oi.quantity,
+              'subtotal', oi.subtotal
+            )
+            ORDER BY oi.id
+          )
+          FROM order_items oi
+          WHERE oi.order_id = o.id
+        ),
+        '[]'::json
+      ) AS items
+    FROM orders o
+    LEFT JOIN pickup_spots ps ON ps.id = o.pickup_spot_id
+    WHERE regexp_replace(o.phone, '[\\s-]', '', 'g') = ${phone}
+    ORDER BY o.created_at DESC
+  `) as LookupRow[];
+  return rows.map(toLookupOrder);
 }
