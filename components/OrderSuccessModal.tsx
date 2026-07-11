@@ -6,6 +6,39 @@ import { CartItem, OrderFormData, OrderConfirmation } from "../types";
 import { calcLineSubtotal } from "../app/lib/promotions";
 import PwaInstallPrompt from "./PwaInstallPrompt";
 
+// 取貨地區 LINE 社群邀請連結。社群地區劃分與 pickup_spots 縣市鄉鎮無法一對一
+// 對映（南投縣同時對到兩個社群）、宅配訂單也無取貨地區，故一律列出全部由顧客自選。
+const LINE_GROUPS = [
+  {
+    region: "埔里/南投",
+    url: "https://line.me/ti/g2/JYFCRuWLyDTddIAtq2Hv1BAJ-6w3p1eQ1YbmyQ?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+  },
+  {
+    region: "彰化區",
+    url: "https://line.me/ti/g2/Acg4Z2f5ULRisUXf0xzXVnpQGWqCm9zFTbc30Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+  },
+  {
+    region: "新竹",
+    url: "https://line.me/ti/g2/E0TZXMEMU3rNfgh3MSJjWFE19a5NQrs6wEJYxA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+  },
+  {
+    region: "竹山/林內/斗六/嘉義",
+    url: "https://line.me/ti/g2/fvppqDOTmsAHegEifx9mewll_Dj27SfxCAC5Cg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+  },
+  {
+    region: "苗栗區",
+    url: "https://line.me/ti/g2/FvrEoM746uqUqOMqa9UXnXeoDQAfvZbofOAjNg?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+  },
+  {
+    region: "桃園",
+    url: "https://line.me/ti/g2/fym_9_9rqnhCffVvuJDE5iKThU3HYAvK7pGE4Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+  },
+  {
+    region: "台中區",
+    url: "https://line.me/ti/g2/EaRFMozU7jATXOfOc71XjtAm-3td0_7aI0sjRA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+  },
+];
+
 interface OrderSuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -210,6 +243,32 @@ export default function OrderSuccessModal({
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* 取貨地區 LINE 社群：列出全部地區由顧客自選（見 LINE_GROUPS 註解） */}
+          <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4 space-y-3">
+            <div className="flex flex-col space-y-1">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#166534]">
+                加入取貨地區 LINE 社群
+              </span>
+              <p className="text-[10px] text-[#166534]/80 font-medium leading-relaxed">
+                點擊您取貨地區的社群，掌握最新到貨與取貨資訊。
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {LINE_GROUPS.map(({ region, url }) => (
+                <a
+                  key={region}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`加入 CC生鮮（${region}）LINE 社群`}
+                  className="px-2 py-2 bg-white/70 border border-[#06C755]/25 text-[#166534] hover:bg-[#06C755] hover:text-white hover:border-[#06C755] text-[11px] font-bold rounded-md transition-all active:scale-95 text-center shadow-sm"
+                >
+                  {region}
+                </a>
+              ))}
             </div>
           </div>
         </div>

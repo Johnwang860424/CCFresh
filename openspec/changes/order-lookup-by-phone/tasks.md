@@ -35,6 +35,13 @@
 - [x] T5.4 同檔：查無資料空狀態、格式錯誤前端擋下
 - [x] T5.5 `npm run test:e2e` 全綠
 
+## T6. 成立訂單彈窗：LINE 社群區塊（同批追加需求）
+
+- [x] T6.1 `OrderSuccessModal.tsx`：模組層級常數存 7 個地區社群（region + url），可捲動內容區最後加入綠色系社群卡片（兩欄格線、新分頁開啟）
+- [x] T6.2 `e2e/order-success-line-groups.spec.ts`：真實下單 → 彈窗內驗證 7 個連結齊全、href 正確、target=_blank
+- [x] T6.3 目視驗證：桌面與手機寬度下彈窗排版整齊、按鈕上方位置正確
+- [x] T6.4 `npm run lint` + `npm run test:e2e` 全綠
+
 ## 實作前置檢查（設計確認後）
 
 - [x] 功能分支：`feat/Celia/orderLookupByPhone`（基於 main，需求方指定；後續已合併最新 main）

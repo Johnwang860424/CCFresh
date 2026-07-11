@@ -24,13 +24,13 @@ export default defineConfig({
     {
       name: "ios",
       use: { ...devices["iPhone 14"], browserName: "chromium" },
-      // manifest / order-info-autofill / order-lookup 測試與裝置無關，只在 desktop project 跑一次
-      testIgnore: /manifest|order-info-autofill|order-lookup/,
+      // manifest / order-info-autofill / order-lookup / order-success-line-groups 與裝置無關，只在 desktop project 跑一次
+      testIgnore: /manifest|order-info-autofill|order-lookup|order-success-line-groups/,
     },
     {
       name: "android",
       use: { ...devices["Pixel 7"] },
-      testIgnore: /manifest|order-info-autofill|order-lookup/,
+      testIgnore: /manifest|order-info-autofill|order-lookup|order-success-line-groups/,
     },
     {
       name: "desktop",

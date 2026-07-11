@@ -69,7 +69,15 @@ export async function findOrdersByPhone(rawPhone: string): Promise<LookupOrder[]
 - 手機選單：同樣加一項，點擊後關閉選單。
 - 兩者皆 `scrollIntoView({ behavior: "smooth" })` 至 `#order-lookup`，沿用既有 `handleNavClick` 的捲動手法。
 
-## 5. 錯誤處理
+## 5. 成立訂單彈窗：取貨地區 LINE 社群區塊
+
+- **位置**：`OrderSuccessModal` 可捲動內容區的最後一段——視覺上緊貼「確認並返回首頁」按鈕上方。放捲動區內（而非按鈕所在的固定 footer），避免 7 個連結在手機上把內容區壓扁。
+- **資料**：7 個地區社群以模組層級常數陣列存在元件檔內（比照 `App.tsx` 的 `TRUST_BADGES` 慣例），欄位 `region`（顯示用地區名）與 `url`（LINE 邀請連結）。
+- **外觀**：沿用彈窗既有的 LINE 綠色系（宅配客服卡的 `#f0fdf4`／`#bbf7d0`／`#166534`）：綠底卡片＋標題「加入取貨地區 LINE 社群」，內為兩欄格線的地區按鈕（白底綠字、hover 轉 `#06C755` 實色），`target="_blank" rel="noopener noreferrer"` 開新分頁。
+- **不做自動對應**：社群地區劃分與 `pickup_spots` 縣市鄉鎮無法一對一對映（南投縣同時對到「埔里/南投」與「竹山/…」）、宅配訂單無取貨地區，一律顯示全部 7 區由顧客自行點選。
+- **兩種取貨方式皆顯示**。
+
+## 6. 錯誤處理
 
 | 情境 | 行為 |
 |------|------|
@@ -79,7 +87,7 @@ export async function findOrdersByPhone(rawPhone: string): Promise<LookupOrder[]
 | DB 帶連字號的舊電話資料 | SQL 正規化比對照樣命中 |
 | API 5xx／網路錯誤 | 前端紅底警示列，可重試 |
 
-## 6. 測試（Playwright e2e）
+## 7. 測試（Playwright e2e）
 
 依既有 e2e 慣例：真實 dev server + `.env.local` 測試庫（查詢前先真實下單產生資料）。**前置相依**：Playwright 基礎建設尚未進 main，需等 `pwa-install-prompt` 分支合併或先帶進本分支。
 
@@ -89,3 +97,7 @@ export async function findOrdersByPhone(rawPhone: string): Promise<LookupOrder[]
 2. **帶連字號也查得到**：下單用 `0912-XXX-XXX` 格式 → 用純數字查 → 命中（驗證正規化比對）。
 3. **查無資料**：輸入未下過單的有效電話 → 顯示「查無此電話的訂單」。
 4. **格式驗證**：輸入非手機格式 → 前端紅字、不發請求。
+
+新增 `e2e/order-success-line-groups.spec.ts`：
+
+1. **社群區塊呈現**：真實宅配下單 → 成功彈窗內、「確認並返回首頁」按鈕上方出現社群區塊，7 個地區連結齊全、href 正確、皆開新分頁。
