@@ -1,28 +1,10 @@
-import { test, expect, Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { placeDeliveryOrder } from "./helpers";
 
 // 覆蓋 openspec specs/pwa-install-prompt：下單完成後的加入桌面引導。
 // 走真實 dev server + 測試庫（.env.local），下單一律用宅配（不依賴 pickup_spots 資料）。
 
 const PROMPT = '[data-testid="pwa-install-prompt"]';
-
-/** 真實下單（宅配）直到訂單成功彈窗出現 */
-async function placeDeliveryOrder(page: Page) {
-  await page.goto("/");
-
-  // 商品由測試庫載入，等第一張商品卡的加入購物車按鈕
-  await page
-    .getByRole("button", { name: "加入購物車" })
-    .first()
-    .click();
-
-  await page.locator('input[name="name"]').fill("E2E 測試訂單");
-  await page.locator('input[name="phone"]').fill("0912345678");
-  await page.getByRole("button", { name: "宅配到府" }).click();
-  await page.locator('input[name="address"]').fill("台北市中正區測試路 1 號");
-  await page.getByRole("button", { name: "送出訂單" }).click();
-
-  await expect(page.getByText("訂單已成立")).toBeVisible({ timeout: 15_000 });
-}
 
 test.beforeEach(async ({ page }) => {
   // 會寫 DB 的測試自行重置狀態，不假設環境乾淨

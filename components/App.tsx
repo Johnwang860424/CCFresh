@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, ReactNode } from "react";
 import { motion } from "motion/react";
 import {
   ShoppingCart,
@@ -26,6 +26,48 @@ import { calcLineSubtotal } from "../app/lib/promotions";
 import { useResource } from "../app/lib/useResource";
 
 const CART_STORAGE_KEY = "cc_fresh_cart";
+
+// 欄數 → 商品格線 class。單欄僅存在於行動版，桌面斷點仍回到多欄呈現。
+const GRID_CLASS_BY_COLUMNS: Record<number, string> = {
+  1: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 max-w-6xl mx-auto",
+  2: "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto",
+  3: "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto",
+  4: "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto",
+};
+
+// 版面排列選項。active 判斷不全是等值比較：行動版的單欄在桌面斷點呈現四欄，
+// 所以行動版「雙欄」於任何非單欄值都亮、桌面版「四欄」在 columns === 1 時也亮。
+const MOBILE_LAYOUTS = [
+  { value: 1, label: "單欄", isActive: (c: number) => c === 1 },
+  { value: 2, label: "雙欄", isActive: (c: number) => c !== 1 },
+];
+const DESKTOP_LAYOUTS = [
+  { value: 2, label: "雙欄", isActive: (c: number) => c === 2 },
+  { value: 3, label: "三欄", isActive: (c: number) => c === 3 },
+  { value: 4, label: "四欄", isActive: (c: number) => c === 4 || c === 1 },
+];
+
+// 品牌信賴徽章（三欄區塊）
+const TRUST_BADGES = [
+  { Icon: Timer, text: "24小時全程低溫冷鏈" },
+  { Icon: MapPin, text: "定點交貨安心取" },
+  { Icon: PhoneCall, text: "產銷透明食材把關" },
+];
+
+function scrollToSection(id: string) {
+  document
+    .getElementById(id)
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// 商品區的載入中／錯誤／空分類共用同一種狀態框
+function StatusPanel({ children }: { children: ReactNode }) {
+  return (
+    <div className="text-center py-16 bg-slate-950/40 rounded-2xl border border-slate-900 max-w-lg mx-auto">
+      <p className="text-slate-400 font-sans text-sm font-medium">{children}</p>
+    </div>
+  );
+}
 
 // 購物車只持久化「商品 id + 數量」，商品快照（價格/名稱/圖片）一律在 render 時
 // 依最新商品目錄即時帶入，因此不需要再額外做一次「對帳」邏輯。
@@ -83,19 +125,22 @@ export default function App() {
   );
   const [columns, setColumns] = useState<number>(4);
 
-  const gridClass = useMemo(() => {
-    if (columns === 1) {
-      return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 max-w-6xl mx-auto";
-    }
-    if (columns === 2) {
-      return "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto";
-    }
-    if (columns === 3) {
-      return "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto";
-    }
-    // columns === 4
-    return "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto";
-  }, [columns]);
+  const gridClass = GRID_CLASS_BY_COLUMNS[columns];
+
+  const renderLayoutButtons = (layouts: typeof MOBILE_LAYOUTS) =>
+    layouts.map(({ value, label, isActive }) => (
+      <button
+        key={label}
+        onClick={() => setColumns(value)}
+        className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+          isActive(columns)
+            ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
+            : "text-slate-400 hover:text-white"
+        }`}
+      >
+        {label}
+      </button>
+    ));
 
   // 使用者尚未手動選分類時，預設顯示第一個分類（改為 render 時推導，避免在 effect 內 setState）。
   const activeCategory = selectedCategory || categories[0]?.key || "";
@@ -185,21 +230,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Scroll to catalog section helper
-  const scrollToCatalog = () => {
-    const el = document.getElementById("featured-products");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  // Scroll to checkout section helper
-  const scrollToCheckout = () => {
-    const el = document.getElementById("checkout-section");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+  const scrollToCatalog = () => scrollToSection("featured-products");
+  const scrollToCheckout = () => scrollToSection("checkout-section");
 
   // Filter listed products based on actively selected category
   const filteredProducts = products.filter(
@@ -294,77 +326,21 @@ export default function App() {
               
               {/* Mobile Controls */}
               <div className="flex sm:hidden space-x-1">
-                <button
-                  onClick={() => setColumns(1)}
-                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
-                    columns === 1
-                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  單欄
-                </button>
-                <button
-                  onClick={() => setColumns(2)}
-                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
-                    columns !== 1
-                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  雙欄
-                </button>
+                {renderLayoutButtons(MOBILE_LAYOUTS)}
               </div>
 
               {/* Desktop/Tablet Controls */}
               <div className="hidden sm:flex space-x-1">
-                <button
-                  onClick={() => setColumns(2)}
-                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
-                    columns === 2
-                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  雙欄
-                </button>
-                <button
-                  onClick={() => setColumns(3)}
-                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
-                    columns === 3
-                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  三欄
-                </button>
-                <button
-                  onClick={() => setColumns(4)}
-                  className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
-                    columns === 4 || columns === 1
-                      ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  四欄
-                </button>
+                {renderLayoutButtons(DESKTOP_LAYOUTS)}
               </div>
             </div>
           </div>
 
           {/* Product Items Responsive Grid */}
           {isProductsLoading ? (
-            <div className="text-center py-16 bg-slate-950/40 rounded-2xl border border-slate-900 max-w-lg mx-auto">
-              <p className="text-slate-400 font-sans text-sm font-medium">
-                商品載入中...
-              </p>
-            </div>
+            <StatusPanel>商品載入中...</StatusPanel>
           ) : productsError ? (
-            <div className="text-center py-16 bg-slate-950/40 rounded-2xl border border-slate-900 max-w-lg mx-auto">
-              <p className="text-slate-400 font-sans text-sm font-medium">
-                {productsError}
-              </p>
-            </div>
+            <StatusPanel>{productsError}</StatusPanel>
           ) : filteredProducts.length > 0 ? (
             <div className={gridClass}>
               {filteredProducts.map((prod) => {
@@ -381,11 +357,7 @@ export default function App() {
               })}
             </div>
           ) : (
-            <div className="text-center py-16 bg-slate-950/40 rounded-2xl border border-slate-900 max-w-lg mx-auto">
-              <p className="text-slate-400 font-sans text-sm font-medium">
-                該分類目前尚無現貨商品
-              </p>
-            </div>
+            <StatusPanel>該分類目前尚無現貨商品</StatusPanel>
           )}
 
           {/* Floating shopping call-to-action bottom banner once cart is active */}
@@ -427,30 +399,16 @@ export default function App() {
       {/* Brand Attributes / Trust Badges Section */}
       <section className="bg-white py-12 border-y border-[#e7eeff] px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-6 text-center">
-          <div className="flex flex-col items-center space-y-2">
-            <div className="w-12 h-12 bg-[#f0f3ff] rounded-full flex items-center justify-center text-[#0050cc] mb-1">
-              <Timer className="w-6 h-6" />
+          {TRUST_BADGES.map(({ Icon, text }) => (
+            <div key={text} className="flex flex-col items-center space-y-2">
+              <div className="w-12 h-12 bg-[#f0f3ff] rounded-full flex items-center justify-center text-[#0050cc] mb-1">
+                <Icon className="w-6 h-6" />
+              </div>
+              <h3 className="text-[#00102d] text-sm font-black font-sans">
+                {text}
+              </h3>
             </div>
-            <h3 className="text-[#00102d] text-sm font-black font-sans">
-              24小時全程低溫冷鏈
-            </h3>
-          </div>
-          <div className="flex flex-col items-center space-y-2">
-            <div className="w-12 h-12 bg-[#f0f3ff] rounded-full flex items-center justify-center text-[#0050cc] mb-1">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <h3 className="text-[#00102d] text-sm font-black font-sans">
-              定點交貨安心取
-            </h3>
-          </div>
-          <div className="flex flex-col items-center space-y-2">
-            <div className="w-12 h-12 bg-[#f0f3ff] rounded-full flex items-center justify-center text-[#0050cc] mb-1">
-              <PhoneCall className="w-6 h-6" />
-            </div>
-            <h3 className="text-[#00102d] text-sm font-black font-sans">
-              產銷透明食材把關
-            </h3>
-          </div>
+          ))}
         </div>
       </section>
 

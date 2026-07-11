@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, ChangeEvent, SubmitEvent } from "react";
+import { useState, useMemo, useEffect, ChangeEvent, SubmitEvent } from "react";
 import {
   Send,
   MapPin,
@@ -23,6 +23,10 @@ import {
 } from "../types";
 import { calcLineSubtotal } from "../app/lib/promotions";
 import { isValidTwMobile } from "../app/lib/validation";
+import {
+  saveOrderInfo,
+  loadSavedOrderInfo,
+} from "../app/lib/order-info-storage";
 import { useResource } from "../app/lib/useResource";
 
 interface CheckoutFormProps {
@@ -53,6 +57,13 @@ export default function CheckoutForm({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
 
+  // 帶入上次下單資料。須在掛載後才讀 localStorage，否則 SSR 首屏與 client 會 hydration 不一致。
+  useEffect(() => {
+    const saved = loadSavedOrderInfo();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved) setFormData(saved);
+  }, []);
+
   const {
     data: spotsData,
     loading: spotsLoading,
@@ -72,6 +83,23 @@ export default function CheckoutForm({
     () => spots.filter((s) => s.city === formData.city).map((s) => s.township),
     [spots, formData.city],
   );
+
+  // 帶入的取貨地點可能已下架：spots 載入完成後對帳一次。
+  // city 無效清 city+township；city 有效但 township 無效只清 township，其餘欄位照留。
+  useEffect(() => {
+    if (!spotsData) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFormData((prev) => {
+      if (!prev.city && !prev.township) return prev;
+      const cityValid = spotsData.some((s) => s.city === prev.city);
+      if (!cityValid) return { ...prev, city: "", township: "" };
+      const townshipValid = spotsData.some(
+        (s) => s.city === prev.city && s.township === prev.township,
+      );
+      if (prev.township && !townshipValid) return { ...prev, township: "" };
+      return prev;
+    });
+  }, [spotsData]);
 
   const clearError = (key: string) => {
     setErrors((prev) => {
@@ -181,6 +209,8 @@ export default function CheckoutForm({
           (data as { error?: string } | null)?.error ?? "訂單送出失敗",
         );
       }
+      // 只有成功下單才記住訂購資料，供下次自動帶入。
+      saveOrderInfo(formData);
       onSubmitOrder({ ...formData, location }, data as OrderConfirmation);
     } catch (err) {
       console.error("Failed to submit order", err);
