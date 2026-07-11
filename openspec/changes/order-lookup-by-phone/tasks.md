@@ -29,8 +29,8 @@
 
 ## T5. E2E 測試（最後任務群）
 
-- [ ] T5.1 確認 Playwright 基礎建設可用（等 `pwa-install-prompt` 分支合併，或先帶進本分支）
-- [ ] T5.2 `e2e/order-lookup.spec.ts`：真實下單 → 同電話查詢 → 驗證編號／姓名／品項／金額
+- [x] T5.1 確認 Playwright 基礎建設可用：已隨 2026-07-11 合併 main 帶入（config、`e2e/`、共用下單 helper 齊備）
+- [ ] T5.2 `e2e/order-lookup.spec.ts`：真實下單（可重用 `e2e/helpers.ts` 共用下單 helper）→ 同電話查詢 → 驗證編號／姓名／品項／金額
 - [ ] T5.3 同檔：帶連字號下單、純數字查詢命中（正規化比對）
 - [ ] T5.4 同檔：查無資料空狀態、格式錯誤前端擋下
 - [ ] T5.5 `npm run test:e2e` 全綠

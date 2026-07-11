@@ -25,4 +25,4 @@
 - 新增：`components/OrderLookup.tsx`、`app/api/orders/lookup/route.ts`、`e2e/order-lookup.spec.ts`
 - 修改：`app/lib/orders.ts`（新增 `findOrdersByPhone`、`createOrder` 改存正規化電話）、`components/App.tsx`（掛入區塊）、`components/Navbar.tsx`（查詢入口）、`types.ts`（查詢回應型別）
 - 不動：資料庫 schema（`orders` 已有 `created_at` 可排序）、既有快取機制、購物車與結帳流程
-- **前置相依**：Playwright 基礎建設（`playwright.config.ts`、`e2e/`、`test:e2e` script）目前不在 main 上（在 `pwa-install-prompt` 變更的分支）。本變更的 e2e 任務需等其合併進本分支，或先把 Playwright 設定帶進來。
+- **前置相依**：~~Playwright 基礎建設不在 main 上~~ 已解——2026-07-11 合併最新 main 後，本分支已具備 Playwright 設定、`e2e/` 與共用下單 helper（`e2e/helpers.ts`），e2e 任務可直接進行。
