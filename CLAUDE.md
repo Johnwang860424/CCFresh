@@ -19,7 +19,6 @@ CC 生鮮 (CC Fresh) — a single-page frozen-food ordering site. Next.js 16 (Ap
 Copy `.env.example` → `.env.local` and fill in:
 - `DATABASE_URL` — Neon Postgres connection string (use the pooled connection)
 - `ADMIN_SECRET_TOKEN` — Bearer token guarding `POST /api/revalidate`
-- `AUTH_SECRET` — reserved for NextAuth (not yet wired up)
 
 The DB schema is not in this repo; tables referenced: `products`, `categories`, `pickup_spots`, `orders`, `order_items`.
 
@@ -51,6 +50,7 @@ Read functions embed the app's display order in SQL: products `ORDER BY sort_ord
 - Shared types are in `types.ts` (root); `ProductPromo`/`PromoConfig` types live in `promotions.ts`.
 - **Two delivery methods.** `pickup` requires a `(city, township)` resolving to a `pickup_spots` row; `delivery` requires a free-text `shipping_address`. `createOrder` branches on `deliveryMethod` for both validation and the insert.
 - **`pickup_number` is the customer-facing order number for both methods** (the DB auto-id is never exposed). Pickup: max+1 scoped per spot, guarded by the `(pickup_spot_id, pickup_number)` unique constraint and retried on conflict. Delivery: `pickup_spot_id` is NULL and the number is max+1 across all delivery orders — NULL escapes that unique constraint, so the same retry runs but cannot fully prevent duplicate numbers under high concurrency (accepted trade-off).
+- **Displayed order numbers are prefixed with the spot code.** `pickup_spots.code` (1–3 uppercase letters, maintained by the admin app, unique per route) prefixes the number for pickup orders; delivery orders stay numeric. The API returns the pre-formatted string as `pickupCode` (`OrderConfirmation` / `LookupOrder`) — clients never compose it. The code is joined live from `pickup_spots`, never snapshotted, so an admin-side code change immediately changes existing orders' displayed numbers.
 
 ## Design
 

@@ -40,7 +40,8 @@ test("下單後以電話查得到訂單，連字號格式也命中", async ({ pa
   await expect(section.getByText(/共 \d+ 筆訂單/)).toBeVisible({
     timeout: 15_000,
   });
-  await expect(section.getByText(/編號 #\d+/)).toBeVisible();
+  // 宅配訂單無站點代碼，取貨號維持純數字（自取訂單為代碼＋數字，如 A3）。
+  await expect(section.getByText(/取貨號碼牌 \d+/)).toBeVisible();
   await expect(section.getByText("訂購人：E2E 查詢測試")).toBeVisible();
   await expect(section.getByText("數量: 1")).toBeVisible();
   await expect(section.getByText("總計")).toBeVisible();
