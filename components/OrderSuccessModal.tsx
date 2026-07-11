@@ -128,7 +128,7 @@ export default function OrderSuccessModal({
                 </span>
               </div>
               <span className="text-3xl font-black font-mono text-[#ef6c00] leading-none">
-                {confirmation.pickupNumber}
+                {confirmation.pickupCode}
               </span>
             </div>
           ) : (
@@ -147,7 +147,7 @@ export default function OrderSuccessModal({
                     訂單編號
                   </span>
                   <span className="text-xl font-black font-mono text-[#166534] leading-none">
-                    {confirmation.pickupNumber}
+                    {confirmation.pickupCode}
                   </span>
                 </div>
                 <a

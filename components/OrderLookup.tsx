@@ -94,11 +94,10 @@ export default function OrderLookup() {
                 value={phone}
                 onChange={handlePhoneChange}
                 placeholder="09XXXXXXXX"
-                className={`flex-1 px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${
-                  error
-                    ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                    : "border-[#cfdaf1] hover:border-[#485e8a]"
-                }`}
+                className={`flex-1 px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${error
+                  ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                  : "border-[#cfdaf1] hover:border-[#485e8a]"
+                  }`}
               />
               <button
                 type="submit"
@@ -141,7 +140,7 @@ export default function OrderLookup() {
                         {/* 主要資訊：編號 + 姓名 */}
                         <div className="flex justify-between items-baseline gap-3">
                           <span className="text-base font-black text-[#00102d] font-sans">
-                            編號 #{order.pickupNumber}
+                            取貨號碼牌 {order.pickupCode}
                           </span>
                           <span className="text-xs font-medium text-[#44474f]">
                             {formatOrderTime(order.createdAt)}
@@ -153,24 +152,24 @@ export default function OrderLookup() {
 
                         {/* 品項明細（正常訂單必有品項，空陣列僅防禦性略過） */}
                         {order.items.length > 0 && (
-                        <div className="space-y-2 border-y border-[#cfdaf1]/50 py-3 bg-white/40 rounded-lg px-1">
-                          {order.items.map((item, idx) => (
-                            <div
-                              key={idx}
-                              className="flex justify-between items-center text-xs font-sans text-[#111c2c] px-2 py-1 bg-white/60 rounded"
-                            >
-                              <span className="font-semibold">{item.name}</span>
-                              <div className="flex items-center space-x-3">
-                                <span className="text-[#44474f]">
-                                  數量: {item.quantity}
-                                </span>
-                                <span className="font-bold text-[#0050cc]">
-                                  NT$ {item.subtotal.toLocaleString()}
-                                </span>
+                          <div className="space-y-2 border-y border-[#cfdaf1]/50 py-3 bg-white/40 rounded-lg px-1">
+                            {order.items.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center text-xs font-sans text-[#111c2c] px-2 py-1 bg-white/60 rounded"
+                              >
+                                <span className="font-semibold">{item.name}</span>
+                                <div className="flex items-center space-x-3">
+                                  <span className="text-[#44474f]">
+                                    數量: {item.quantity}
+                                  </span>
+                                  <span className="font-bold text-[#0050cc]">
+                                    NT$ {item.subtotal.toLocaleString()}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
                         )}
 
                         {/* 總金額 */}

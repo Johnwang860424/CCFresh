@@ -13,7 +13,6 @@
 2. 設定環境變數：複製 `.env.example` → `.env.local` 並填入：
    - `DATABASE_URL` — Neon Postgres 連線字串（使用 pooled connection）
    - `ADMIN_SECRET_TOKEN` — 保護 `POST /api/revalidate` 的 Bearer token
-   - `AUTH_SECRET` — 預留給 NextAuth（尚未接入）
 3. 啟動開發伺服器：
    ```bash
    npm run dev
@@ -25,18 +24,22 @@
 - `npm run dev` — 開發模式 (http://localhost:3000)
 - `npm run build` — 產出正式版
 - `npm run start` — 啟動正式版伺服器
-- `npm run lint` — 型別 / lint 檢查
+- `npm run lint` — ESLint 程式碼檢查
+- `npm run test:e2e` — Playwright E2E 測試
 
 ## 專案結構
 
 ```
 app/
   layout.tsx       # 根 layout、<html>/<body>、SEO metadata
-  page.tsx         # 首頁 (Server Component)，渲染 <App/>
+  page.tsx         # 首頁 (Server Component)，渲染 components/App.tsx
   globals.css      # Tailwind v4 + 主題變數
   api/             # Route Handlers (products / categories / pickup-spots / orders / revalidate)
   lib/             # 伺服器端資料層（SQL 封裝、快取）+ 共用工具（promotions / validation）
 components/         # UI 元件 (互動元件標記 "use client")
+  App.tsx          # 前端根元件，持有購物車狀態
+e2e/               # Playwright 端對端 (E2E) 測試案例
+public/            # 靜態資源 (Logo, 背景圖) 與 PWA 資源
 types.ts           # 共用型別定義
 ```
 

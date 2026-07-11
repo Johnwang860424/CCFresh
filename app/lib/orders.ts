@@ -24,6 +24,14 @@ interface LineItem {
   subtotal: number; // 折後實付小計
 }
 
+// 顯示用取貨號：自取＝站點代碼（pickup_spots.code，管理端維護）＋流水號；宅配無站點＝純數字。
+function formatPickupCode(
+  spotCode: string | null,
+  pickupNumber: number,
+): string {
+  return spotCode === null ? String(pickupNumber) : `${spotCode}${pickupNumber}`;
+}
+
 // Postgres 唯一鍵衝突。
 function isUniqueViolation(err: unknown): boolean {
   return (
@@ -114,6 +122,7 @@ export async function createOrder(
 
   // 取貨方式相關欄位。
   let pickupSpotId: number | null = null;
+  let spotCode: string | null = null;
   let shippingAddress: string | null = null;
   if (deliveryMethod === "pickup") {
     const city = asString(body.city);
@@ -122,14 +131,15 @@ export async function createOrder(
       return { error: "請選擇取貨地點" };
     }
     const spots = (await sql`
-      SELECT id FROM pickup_spots
+      SELECT id, code FROM pickup_spots
       WHERE city = ${city} AND township = ${township}
       LIMIT 1
-    `) as { id: number }[];
+    `) as { id: number; code: string }[];
     if (spots.length === 0) {
       return { error: "取貨地點不存在" };
     }
     pickupSpotId = spots[0].id;
+    spotCode = spots[0].code;
   } else {
     shippingAddress = asString(body.address);
     if (!shippingAddress) {
@@ -171,7 +181,7 @@ export async function createOrder(
     order: {
       total,
       deliveryMethod,
-      pickupNumber: order.pickupNumber,
+      pickupCode: formatPickupCode(spotCode, order.pickupNumber),
     },
   };
 }
@@ -217,6 +227,7 @@ async function insertOrder(
 interface LookupRow {
   id: number;
   pickup_number: number;
+  spot_code: string | null;
   customer_name: string;
   delivery_method: "pickup" | "delivery";
   shipping_address: string | null;
@@ -231,7 +242,7 @@ interface LookupRow {
 function toLookupOrder(row: LookupRow): LookupOrder {
   return {
     id: String(row.id),
-    pickupNumber: row.pickup_number,
+    pickupCode: formatPickupCode(row.spot_code, row.pickup_number),
     customerName: row.customer_name,
     deliveryMethod: row.delivery_method,
     location:
@@ -262,6 +273,7 @@ export async function findOrdersByPhone(
     SELECT
       o.id,
       o.pickup_number,
+      ps.code AS spot_code,
       o.customer_name,
       o.delivery_method,
       o.shipping_address,

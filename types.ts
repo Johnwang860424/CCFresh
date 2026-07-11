@@ -59,7 +59,8 @@ export interface PlaceOrderRequest {
 export interface OrderConfirmation {
   total: number;
   deliveryMethod: DeliveryMethod;
-  pickupNumber: number;
+  /** 顯示用取貨號：自取＝站點代碼＋流水號（如 A3）；宅配＝純數字。 */
+  pickupCode: string;
 }
 
 /** 電話查詢訂單：單筆品項（寫入當下的快照，非最新目錄）。 */
@@ -72,7 +73,8 @@ export interface LookupOrderItem {
 /** 電話查詢訂單：回傳給前端的單筆訂單。 */
 export interface LookupOrder {
   id: string;
-  pickupNumber: number;
+  /** 顯示用取貨號：自取＝站點代碼＋流水號（如 A3）；宅配＝純數字。 */
+  pickupCode: string;
   customerName: string;
   deliveryMethod: DeliveryMethod;
   /** 自取＝縣市＋取貨點；宅配＝收件地址。 */
