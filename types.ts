@@ -10,6 +10,8 @@ export interface Product {
   category: string;
   description?: string;
   promo: ProductPromo | null;
+  /** 剩餘可售數量；null＝不限量（不追蹤庫存）、0＝售完。 */
+  stock: number | null;
 }
 
 export interface Category {

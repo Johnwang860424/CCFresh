@@ -6,6 +6,7 @@ const products: Product[] = [{
   id: "1", name: "白蝦", weight: "500g", price: 300, images: [],
   badge: "第二件 8 折", category: "1",
   promo: { type: "second_item", config: { discount: 80 } },
+  stock: null,
 }];
 
 const request: PlaceOrderRequest = {
@@ -43,5 +44,24 @@ describe("order domain", () => {
     expect(prepareOrder({ ...request, items: [
       { productId: "1", quantity: 600 }, { productId: "1", quantity: 400 },
     ] }, products)).toEqual({ error: "商品數量不正確" });
+  });
+
+  it("rejects lines exceeding remaining stock with per-product messages", () => {
+    const limited: Product[] = [
+      { ...products[0], id: "1", name: "白蝦", stock: 1 },
+      { ...products[0], id: "2", name: "干貝", stock: 0, promo: null, badge: null },
+    ];
+    expect(prepareOrder({ ...request, items: [
+      { productId: "1", quantity: 2 }, { productId: "2", quantity: 1 },
+    ] }, limited)).toEqual({
+      error: "「白蝦」庫存不足（剩餘 1）；「干貝」庫存不足（剩餘 0）",
+    });
+  });
+
+  it("accepts orders that exactly consume remaining stock", () => {
+    const limited: Product[] = [{ ...products[0], stock: 2 }];
+    expect(prepareOrder(request, limited)).toMatchObject({
+      value: { lines: [{ quantity: 2 }] },
+    });
   });
 });

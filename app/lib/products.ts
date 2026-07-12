@@ -13,6 +13,7 @@ interface ProductRow {
   promo_type: string | null;
   promo_config: PromoConfig | null;
   description: string | null;
+  stock: number | null;
 }
 
 function toProduct(row: ProductRow): Product {
@@ -36,6 +37,7 @@ function toProduct(row: ProductRow): Product {
       strategy && promoConfig
         ? { type: row.promo_type as string, config: promoConfig }
         : null,
+    stock: row.stock ?? null,
   };
 }
 
@@ -51,6 +53,7 @@ export const getProducts = unstable_cache(
         p.promo_type,
         p.promo_config,
         p.description,
+        p.stock,
         COALESCE(
           (
             SELECT json_agg(pi.image_url ORDER BY pi.sort_order, pi.id)
