@@ -20,6 +20,9 @@ export default function ProductCard({
   onRemoveOneFromCart,
 }: ProductCardProps) {
   const quantity = cartItem ? cartItem.quantity : 0;
+  // 售完（stock === 0）不可加入購物車；有限庫存達剩餘量時「+」停用。
+  const isSoldOut = product.stock === 0;
+  const isMaxReached = product.stock !== null && quantity >= product.stock;
   const [isZoomed, setIsZoomed] = useState(false);
   const [isLargeImageLoading, setIsLargeImageLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -101,6 +104,15 @@ export default function ProductCard({
       >
         {renderBadge()}
 
+        {/* 售完遮罩：使用冰霜毛玻璃質感，並讓內部的「售完」徽章有精緻感 */}
+        {isSoldOut && (
+          <div className="absolute inset-0 z-10 bg-white/30 backdrop-blur-[3px] border border-white/10 flex items-center justify-center pointer-events-none">
+            <span className="px-5 py-2 rounded-full bg-[#00102d]/90 text-white text-xs font-black tracking-[0.2em] shadow-lg border border-white/20 uppercase">
+              售完 OUT OF STOCK
+            </span>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           <motion.div
             key={currentImageIndex}
@@ -115,7 +127,9 @@ export default function ProductCard({
               alt={`${product.name} - 圖片 ${currentImageIndex + 1}`}
               fill
               sizes="(max-width: 640px) 80vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              className={`object-cover group-hover:scale-105 transition-transform duration-500 ${
+                isSoldOut ? "grayscale-[45%] brightness-[92%] opacity-75" : ""
+              }`}
               referrerPolicy="no-referrer"
             />
           </motion.div>
@@ -173,20 +187,22 @@ export default function ProductCard({
           </>
         )}
         
-        {/* Zoom Overlay Hover Effect */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10 pointer-events-none">
-          <div className="bg-white/95 text-[#00102d] rounded-full p-2.5 shadow-lg transform scale-90 group-hover/image:scale-100 transition-transform duration-300 flex items-center justify-center pointer-events-auto">
-            <ZoomIn className="w-5 h-5" />
+        {/* Zoom Overlay Hover Effect - Only show zoom indicator if NOT sold out */}
+        {!isSoldOut && (
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10 pointer-events-none">
+            <div className="bg-white/95 text-[#00102d] rounded-full p-2.5 shadow-lg transform scale-90 group-hover/image:scale-100 transition-transform duration-300 flex items-center justify-center pointer-events-auto">
+              <ZoomIn className="w-5 h-5" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Subtle ice shimmer effect on hover */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       </div>
 
       {/* Product Information */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col">
-        <h3 className="text-[#00102d] text-base font-bold font-sans tracking-wide mb-1 leading-snug group-hover:text-[#0050cc] transition-colors">
+      <div className={`p-4 sm:p-5 flex-1 flex flex-col transition-opacity duration-300 ${isSoldOut ? "opacity-65" : "opacity-100"}`}>
+        <h3 className={`text-[#00102d] text-base font-bold font-sans tracking-wide mb-1 leading-snug transition-colors ${!isSoldOut ? "group-hover:text-[#0050cc]" : ""}`}>
           {product.name}
         </h3>
 
@@ -222,10 +238,15 @@ export default function ProductCard({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
                   onClick={() => onAddToCart(product)}
-                  className="w-full h-9 bg-[#ef6c00] text-white hover:bg-[#d84315] rounded-full text-xs font-bold leading-none cursor-pointer transition-all duration-200 flex items-center justify-center space-x-1 shadow-sm active:scale-95 py-2.5 px-3"
+                  disabled={isSoldOut}
+                  className={`w-full h-9 rounded-full text-xs font-bold leading-none transition-all duration-200 flex items-center justify-center space-x-1 shadow-sm py-2.5 px-3 ${
+                    isSoldOut
+                      ? "bg-[#f0f3ff] text-[#898e92] border border-[#dee8ff] cursor-not-allowed"
+                      : "bg-[#ef6c00] text-white hover:bg-[#d84315] cursor-pointer active:scale-95"
+                  }`}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
-                  <span>加入購物車</span>
+                  <span>{isSoldOut ? "已售完" : "加入購物車"}</span>
                 </motion.button>
               ) : (
                 <motion.div
@@ -250,10 +271,15 @@ export default function ProductCard({
                     {quantity}
                   </span>
 
-                  {/* Plus button */}
+                  {/* Plus button（達剩餘庫存量即停用） */}
                   <button
                     onClick={() => onAddToCart(product)}
-                    className="w-7 h-7 bg-[#0050cc] hover:bg-[#0266ff] text-white rounded-full flex items-center justify-center focus:outline-none transition-all cursor-pointer shadow-sm active:scale-95"
+                    disabled={isMaxReached}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center focus:outline-none transition-all shadow-sm ${
+                      isMaxReached
+                        ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                        : "bg-[#0050cc] hover:bg-[#0266ff] text-white cursor-pointer active:scale-95"
+                    }`}
                     aria-label="Increase quantity"
                   >
                     <Plus className="w-3 h-3" />

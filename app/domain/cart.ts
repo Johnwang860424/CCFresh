@@ -49,7 +49,11 @@ export function changeCartQuantity(
       );
 }
 
-/** Hydrate compact cart rows from the latest catalog; delisted products disappear. */
+/**
+ * Hydrate compact cart rows from the latest catalog; delisted products disappear.
+ * 售完（stock === 0）商品一併剔除；有限庫存則把數量夾到剩餘量，避免帶著
+ * 注定被後端拒絕的數量進結帳。
+ */
 export function hydrateCart(
   cart: StoredCartItem[],
   products: Product[],
@@ -57,6 +61,10 @@ export function hydrateCart(
   const productById = new Map(products.map((product) => [product.id, product]));
   return cart.flatMap(({ id, quantity }) => {
     const product = productById.get(id);
-    return product ? [{ product, quantity }] : [];
+    if (!product) return [];
+    if (product.stock !== null && product.stock <= 0) return [];
+    const cappedQuantity =
+      product.stock === null ? quantity : Math.min(quantity, product.stock);
+    return [{ product, quantity: cappedQuantity }];
   });
 }

@@ -66,6 +66,18 @@ export function prepareOrder(
   }
 
   const productById = new Map(products.map((product) => [product.id, product]));
+
+  // 庫存預檢：不限量（stock === null）不檢查；不足則整筆拒絕並列出各品項剩餘量。
+  // 目錄可能來自快取，最終防線是資料庫寫入時的原子扣減＋非負約束。
+  const shortages: string[] = [];
+  for (const [id, quantity] of quantityById) {
+    const product = productById.get(id);
+    if (product && product.stock !== null && quantity > product.stock) {
+      shortages.push(`「${product.name}」庫存不足（剩餘 ${product.stock}）`);
+    }
+  }
+  if (shortages.length > 0) return { error: shortages.join("；") };
+
   const lines: OrderLine[] = [];
   let total = 0;
   for (const [id, quantity] of quantityById) {

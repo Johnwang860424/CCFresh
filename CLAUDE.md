@@ -22,7 +22,8 @@ CC 生鮮 (CC Fresh) — a single-page frozen-food ordering site. Next.js 16 (Ap
 
 Copy `.env.example` → `.env.local` and fill in:
 - `DATABASE_URL` — Neon Postgres connection string (use the pooled connection)
-- `ADMIN_SECRET_TOKEN` — Bearer token guarding `POST /api/revalidate`
+- `ADMIN_SECRET_TOKEN` — Bearer token guarding `POST /api/revalidate`; also sent when calling the admin app's `/api/revalidate` back (shared secret)
+- `ADMIN_URL` — admin app base URL; after an order decrements stock, its `/api/revalidate` is notified so the admin's product cache refreshes (optional — unset skips the call)
 
 The DB schema is not in this repo; tables referenced: `products`, `categories`, `pickup_spots`, `orders`, `order_items`.
 
@@ -59,6 +60,7 @@ Read functions embed the app's display order in SQL: products `ORDER BY sort_ord
 ## Key conventions
 
 - **Never trust client-sent prices.** `createOrder` loads the DB catalog and `prepareOrder` recomputes every line subtotal via `calcLineSubtotal`; request amounts are ignored.
+- **Stock (防超賣).** `products.stock` is a remaining-sellable counter maintained by the admin app: `NULL` = untracked (no check, no decrement), `0` = sold out. `prepareOrder` pre-checks against the (possibly cached) catalog for friendly per-product messages (「name」庫存不足（剩餘 N）, joined with ；). The real guard is in `insertOrder`: the order, its items, and the stock decrement ride one CTE statement, so the DB constraint `products_stock_nonneg` (SQLSTATE 23514, filtered by constraint name) atomically aborts the whole order on insufficiency — concurrent orders serialize on row locks and can never oversell. On 23514 the current stock is re-queried to build the same message shape. After a successful order, `createOrder` calls `revalidateCache("products")` (`app/lib/revalidate.ts`) — it revalidates the local `products` tag and best-effort notifies the admin app's `/api/revalidate` (`ADMIN_URL` + shared `ADMIN_SECRET_TOKEN`) so both catalogs reflect new stock. UI: sold-out products show a 售完 overlay and a disabled add button (`ProductCard`), `hydrateCart` drops sold-out cart rows and caps quantities at remaining stock, and the stepper's `+` disables at the cap.
 - **Promotions use a strategy pattern** in `app/lib/promotions.ts` — this is the one module shared by both client and server, so keep it free of server-only imports. To add a discount type, define a `PromoStrategy` (validate / describe / subtotal) and add it to `PROMO_STRATEGIES`. Strategy config is stored in `products.promo_config` (JSONB) keyed by `products.promo_type`.
 - **Shared validation** lives in `app/lib/validation.ts` (also client+server safe), e.g. `isValidTwMobile`.
 - **DB ids are integers; the app uses strings.** Data-layer mappers convert (`String(row.id)`), and `createOrder` converts back with `Number(...)`.
