@@ -25,6 +25,10 @@
 - `npm run build` — 產出正式版
 - `npm run start` — 啟動正式版伺服器
 - `npm run lint` — ESLint 程式碼檢查
+- `npm run typecheck` — TypeScript 型別檢查
+- `npm test` — 快速單元測試（不需要資料庫或瀏覽器）
+- `npm run test:watch` — 開發時監看並重跑相關單元測試
+- `npm run check` — 一次執行 lint、型別檢查與單元測試
 - `npm run test:e2e` — Playwright E2E 測試
 
 ## 專案結構
@@ -35,6 +39,7 @@ app/
   page.tsx         # 首頁 (Server Component)，渲染 components/App.tsx
   globals.css      # Tailwind v4 + 主題變數
   api/             # Route Handlers (products / categories / pickup-spots / orders / revalidate)
+  domain/          # 純商業邏輯（無 DB / React 相依），就近放置 *.test.ts
   lib/             # 伺服器端資料層（SQL 封裝、快取）+ 共用工具（promotions / validation）
 components/         # UI 元件 (互動元件標記 "use client")
   App.tsx          # 前端根元件，持有購物車狀態
@@ -57,5 +62,11 @@ types.ts           # 共用型別定義
   商品重載時會與最新型錄對帳（移除下架品、覆寫過期價格 / 名稱）。
 
 > 安全性：`createOrder` 不信任前端傳來的金額，所有小計皆依 DB 型錄重新計算。
+
+## 測試策略
+
+日常開發先跑 `npm run check`；它完全不依賴 Neon 或瀏覽器。商業規則放在
+`app/domain/` 並以 `*.test.ts` 就近測試。跨 API、UI 與資料庫的關鍵流程才放進
+`e2e/`；E2E 會寫入資料，只允許連到 `e2e/global-setup.ts` 白名單中的測試庫。
 
 詳見 `CLAUDE.md`（架構與慣例）與 `DESIGN.md`（設計系統規範）。

@@ -25,8 +25,13 @@ import {
 } from "../types";
 import { calcLineSubtotal } from "../app/lib/promotions";
 import { useResource } from "../app/lib/useResource";
-
-const CART_STORAGE_KEY = "cc_fresh_cart";
+import {
+  CART_STORAGE_KEY,
+  changeCartQuantity,
+  hydrateCart,
+  parseStoredCart,
+  type StoredCartItem,
+} from "../app/domain/cart";
 
 // 欄數 → 商品格線 class。單欄僅存在於行動版，桌面斷點仍回到多欄呈現。
 const GRID_CLASS_BY_COLUMNS: Record<number, string> = {
@@ -72,12 +77,7 @@ function StatusPanel({ children }: { children: ReactNode }) {
 
 // 購物車只持久化「商品 id + 數量」，商品快照（價格/名稱/圖片）一律在 render 時
 // 依最新商品目錄即時帶入，因此不需要再額外做一次「對帳」邏輯。
-interface RawCartItem {
-  id: string;
-  quantity: number;
-}
-
-function persistCart(cart: RawCartItem[]) {
+function persistCart(cart: StoredCartItem[]) {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   } catch (e) {
@@ -85,26 +85,8 @@ function persistCart(cart: RawCartItem[]) {
   }
 }
 
-// 解析 localStorage 內的購物車，並相容舊版（整包 CartItem 含 product 快照）格式。
-function parseStoredCart(raw: string): RawCartItem[] {
-  const parsed = JSON.parse(raw) as unknown[];
-  if (!Array.isArray(parsed)) return [];
-  return parsed.flatMap((entry) => {
-    const obj = entry as {
-      id?: string;
-      quantity?: number;
-      product?: { id?: string };
-    };
-    const id = obj.product?.id ?? obj.id;
-    const quantity = Number(obj.quantity);
-    return id && Number.isInteger(quantity) && quantity > 0
-      ? [{ id, quantity }]
-      : [];
-  });
-}
-
 export default function App() {
-  const [rawCart, setRawCart] = useState<RawCartItem[]>([]);
+  const [rawCart, setRawCart] = useState<StoredCartItem[]>([]);
   const {
     data: productsData,
     loading: isProductsLoading,
@@ -149,11 +131,7 @@ export default function App() {
   // 以「id + 數量」搭配最新商品目錄即時組出購物車：找不到的商品（已下架）自動略過，
   // 價格／名稱／圖片一律取最新值——等同於原本的對帳，但改為宣告式推導。
   const cart = useMemo<CartItem[]>(() => {
-    const productById = new Map((productsData ?? []).map((p) => [p.id, p]));
-    return rawCart.flatMap(({ id, quantity }) => {
-      const product = productById.get(id);
-      return product ? [{ product, quantity }] : [];
-    });
+    return hydrateCart(rawCart, productsData ?? []);
   }, [rawCart, productsData]);
 
 
@@ -173,36 +151,17 @@ export default function App() {
 
 
   // Save cart to LocalStorage on updates
-  const saveCart = (newCart: RawCartItem[]) => {
+  const saveCart = (newCart: StoredCartItem[]) => {
     setRawCart(newCart);
     persistCart(newCart);
   };
 
   const handleAddToCart = (product: Product) => {
-    const existing = rawCart.find((item) => item.id === product.id);
-    const newCart = existing
-      ? rawCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        )
-      : [...rawCart, { id: product.id, quantity: 1 }];
-    saveCart(newCart);
+    saveCart(changeCartQuantity(rawCart, product.id, 1));
   };
 
   const handleRemoveOneFromCart = (productId: string) => {
-    const existing = rawCart.find((item) => item.id === productId);
-    if (!existing) return;
-
-    const newCart =
-      existing.quantity <= 1
-        ? rawCart.filter((item) => item.id !== productId)
-        : rawCart.map((item) =>
-            item.id === productId
-              ? { ...item, quantity: item.quantity - 1 }
-              : item,
-          );
-    saveCart(newCart);
+    saveCart(changeCartQuantity(rawCart, productId, -1));
   };
 
   const handleRemoveItem = (productId: string) => {
