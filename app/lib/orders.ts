@@ -1,28 +1,14 @@
 import { sql } from "@/app/lib/db";
 import { getProducts } from "@/app/lib/products";
-import { calcLineSubtotal } from "@/app/lib/promotions";
-import { isValidTwMobile, normalizePhone } from "@/app/lib/validation";
+import { prepareOrder } from "@/app/domain/order";
+import { normalizePhone } from "@/app/lib/validation";
 import type {
   LookupOrder,
   OrderConfirmation,
-  PlaceOrderRequest,
 } from "@/types";
 
-// 單一品項數量上限，擋住明顯異常/惡意的輸入。
-const MAX_QUANTITY = 999;
 // pickup_number 撞唯一鍵（併發下單同一取貨點）時的重試次數。
 const PICKUP_NUMBER_RETRIES = 5;
-
-// 下單當下重新計算出的單筆品項，作為寫入 order_items 的快照。
-interface LineItem {
-  productId: number;
-  productName: string;
-  unitPrice: number; // 原價快照
-  quantity: number;
-  promoType: string | null; // 促銷快照
-  promoConfig: string | null; // JSONB 字串，無促銷為 null
-  subtotal: number; // 折後實付小計
-}
 
 // 顯示用取貨號：自取＝站點代碼（pickup_spots.code，管理端維護）＋流水號；宅配無站點＝純數字。
 function formatPickupCode(
@@ -41,10 +27,6 @@ function isUniqueViolation(err: unknown): boolean {
   );
 }
 
-function asString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
 /**
  * 驗證請求、依後端商品目錄重算價格、寫入訂單與明細。
  * 回傳 { order } 或 { error }（由呼叫端決定回應 400/500）。
@@ -53,86 +35,19 @@ function asString(value: unknown): string {
 export async function createOrder(
   raw: unknown,
 ): Promise<{ order: OrderConfirmation } | { error: string }> {
-  if (typeof raw !== "object" || raw === null) {
-    return { error: "訂單格式錯誤" };
-  }
-  const body = raw as Partial<PlaceOrderRequest>;
-
-  const customerName = asString(body.customerName);
-  if (!customerName) {
-    return { error: "請輸入收貨姓名" };
-  }
-  const phone = asString(body.phone);
-  if (!phone) {
-    return { error: "請輸入聯絡電話" };
-  }
-  // 台灣手機格式（容忍空白／連字號），與前端共用同一驗證。
-  if (!isValidTwMobile(phone)) {
-    return { error: "請輸入有效的台灣手機號碼" };
-  }
-
-  const deliveryMethod = body.deliveryMethod;
-  if (deliveryMethod !== "pickup" && deliveryMethod !== "delivery") {
-    return { error: "無效的取貨方式" };
-  }
-
-  if (!Array.isArray(body.items) || body.items.length === 0) {
-    return { error: "購物車內沒有商品" };
-  }
-
-  // 數量合法性檢查，並合併同一商品的重複列。
-  const quantityById = new Map<string, number>();
-  for (const item of body.items) {
-    const productId = asString(item?.productId);
-    const quantity = Number(item?.quantity);
-    if (
-      !productId ||
-      !Number.isInteger(quantity) ||
-      quantity < 1 ||
-      quantity > MAX_QUANTITY
-    ) {
-      return { error: "商品數量不正確" };
-    }
-    quantityById.set(productId, (quantityById.get(productId) ?? 0) + quantity);
-  }
-
-  // 以資料庫目錄為權威來源重算價格/促銷。
   const products = await getProducts();
-  const productById = new Map(products.map((p) => [p.id, p]));
-
-  const lineItems: LineItem[] = [];
-  let total = 0;
-  for (const [productId, quantity] of quantityById) {
-    const product = productById.get(productId);
-    if (!product) {
-      return { error: "部分商品已下架，請重新整理購物車" };
-    }
-    const subtotal = calcLineSubtotal(product.promo, product.price, quantity);
-    total += subtotal;
-    lineItems.push({
-      productId: Number(product.id),
-      productName: product.name,
-      unitPrice: product.price,
-      quantity,
-      promoType: product.promo?.type ?? null,
-      promoConfig: product.promo ? JSON.stringify(product.promo.config) : null,
-      subtotal,
-    });
-  }
+  const prepared = prepareOrder(raw, products);
+  if ("error" in prepared) return prepared;
+  const value = prepared.value;
 
   // 取貨方式相關欄位。
   let pickupSpotId: number | null = null;
   let spotCode: string | null = null;
   let shippingAddress: string | null = null;
-  if (deliveryMethod === "pickup") {
-    const city = asString(body.city);
-    const township = asString(body.township);
-    if (!city || !township) {
-      return { error: "請選擇取貨地點" };
-    }
+  if (value.deliveryMethod === "pickup") {
     const spots = (await sql`
       SELECT id, code FROM pickup_spots
-      WHERE city = ${city} AND township = ${township}
+      WHERE city = ${value.city} AND township = ${value.township}
       LIMIT 1
     `) as { id: number; code: string }[];
     if (spots.length === 0) {
@@ -141,27 +56,23 @@ export async function createOrder(
     pickupSpotId = spots[0].id;
     spotCode = spots[0].code;
   } else {
-    shippingAddress = asString(body.address);
-    if (!shippingAddress) {
-      return { error: "請輸入收件地址" };
-    }
+    shippingAddress = value.address;
   }
 
   // 建單：取貨單需在同一取貨點內遞增號碼牌，撞唯一鍵時重試。
   const order = await insertOrder({
-    customerName,
-    // 統一存純數字格式；既有未正規化的舊資料由查詢端比對涵蓋。
-    phone: normalizePhone(phone),
-    deliveryMethod,
+    customerName: value.customerName,
+    phone: value.phone,
+    deliveryMethod: value.deliveryMethod,
     pickupSpotId,
     shippingAddress,
-    note: asString(body.note) || null,
-    total,
+    note: value.note,
+    total: value.total,
   });
 
   // 寫入明細；任一步失敗就回收訂單（ON DELETE CASCADE 一併清掉已寫入的明細）。
   try {
-    for (const li of lineItems) {
+    for (const li of value.lines) {
       await sql`
         INSERT INTO order_items
           (order_id, product_id, product_name, unit_price, quantity,
@@ -179,8 +90,8 @@ export async function createOrder(
 
   return {
     order: {
-      total,
-      deliveryMethod,
+      total: value.total,
+      deliveryMethod: value.deliveryMethod,
       pickupCode: formatPickupCode(spotCode, order.pickupNumber),
     },
   };
