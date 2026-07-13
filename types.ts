@@ -55,6 +55,17 @@ export interface PlaceOrderRequest {
   address?: string;
   note?: string;
   items: { productId: string; quantity: number }[];
+  /** 疑似重複時，只有嚴格布林 true 代表顧客已確認仍要送出。 */
+  confirmDuplicate?: boolean;
+}
+
+export const DUPLICATE_ORDER_CODE = "DUPLICATE_ORDER" as const;
+export const DUPLICATE_ORDER_MESSAGE = "系統偵測到您可能已有訂單。請確認是否為重複下單";
+
+/** 建單前命中同姓名、同電話時的 API 回應。 */
+export interface DuplicateOrderResponse {
+  code: typeof DUPLICATE_ORDER_CODE;
+  error: string;
 }
 
 /** 建單成功後回傳給前端的確認資料。 */

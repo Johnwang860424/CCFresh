@@ -13,6 +13,7 @@ import {
   Store,
   Truck,
   Home,
+  TriangleAlert,
 } from "lucide-react";
 import {
   CartItem,
@@ -20,14 +21,20 @@ import {
   PickupSpot,
   DeliveryMethod,
   OrderConfirmation,
+  PlaceOrderRequest,
 } from "../types";
 import { calcLineSubtotal } from "../app/lib/promotions";
-import { isValidTwMobile } from "../app/lib/validation";
+import {
+  isValidCustomerName,
+  isValidTwMobile,
+  sanitizePhoneInput,
+} from "../app/lib/validation";
 import {
   saveOrderInfo,
   loadSavedOrderInfo,
 } from "../app/lib/order-info-storage";
 import { useResource } from "../app/lib/useResource";
+import { isDuplicateOrderResponse } from "../app/domain/duplicate-order";
 
 interface CheckoutFormProps {
   cart: CartItem[];
@@ -36,6 +43,12 @@ interface CheckoutFormProps {
     confirmation: OrderConfirmation,
   ) => void;
   onRemoveItem: (productId: string) => void;
+}
+
+interface SubmissionSnapshot {
+  formData: Omit<OrderFormData, "location">;
+  location: string;
+  request: PlaceOrderRequest;
 }
 
 export default function CheckoutForm({
@@ -56,6 +69,8 @@ export default function CheckoutForm({
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
+  const [pendingDuplicate, setPendingDuplicate] =
+    useState<SubmissionSnapshot | null>(null);
 
   // 帶入上次下單資料。須在掛載後才讀 localStorage，否則 SSR 首屏與 client 會 hydration 不一致。
   useEffect(() => {
@@ -135,7 +150,8 @@ export default function CheckoutForm({
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const finalValue = name === "phone" ? sanitizePhoneInput(value) : value;
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
     // Clear errors when writing to the field
     clearError(name);
   };
@@ -143,8 +159,10 @@ export default function CheckoutForm({
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name.trim()) {
+    if (!formData.name) {
       newErrors.name = "請輸入真實姓名";
+    } else if (!isValidCustomerName(formData.name)) {
+      newErrors.name = "姓名不可包含空白";
     }
 
     if (!formData.phone.trim()) {
@@ -169,51 +187,41 @@ export default function CheckoutForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: SubmitEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-    if (totalItems === 0) {
-      setErrors({ cart: "購物車內目前沒有商品，請先向上下訂選購！" });
-      return;
-    }
-    if (!validateForm()) return;
-
-    const location =
-      formData.deliveryMethod === "pickup"
-        ? `${formData.city}${formData.township}`
-        : `${formData.address}`;
-
+  const submitOrder = async (
+    snapshot: SubmissionSnapshot,
+    confirmDuplicate = false,
+  ) => {
     setSubmitting(true);
+    clearError("submit");
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerName: formData.name,
-          phone: formData.phone,
-          deliveryMethod: formData.deliveryMethod,
-          city: formData.city,
-          township: formData.township,
-          address: formData.address,
-          note: formData.remarks,
-          // 只送 id + 數量；價格由後端依商品目錄重算。
-          items: cart.map((item) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-          })),
+          ...snapshot.request,
+          ...(confirmDuplicate ? { confirmDuplicate: true } : {}),
         }),
       });
       const data = await res.json().catch(() => null);
+      if (isDuplicateOrderResponse(res.status, data)) {
+        setPendingDuplicate(snapshot);
+        return;
+      }
       if (!res.ok) {
         throw new Error(
           (data as { error?: string } | null)?.error ?? "訂單送出失敗",
         );
       }
       // 只有成功下單才記住訂購資料，供下次自動帶入。
-      saveOrderInfo(formData);
-      onSubmitOrder({ ...formData, location }, data as OrderConfirmation);
+      saveOrderInfo(snapshot.formData);
+      setPendingDuplicate(null);
+      onSubmitOrder(
+        { ...snapshot.formData, location: snapshot.location },
+        data as OrderConfirmation,
+      );
     } catch (err) {
       console.error("Failed to submit order", err);
+      setPendingDuplicate(null);
       setErrors({
         submit: err instanceof Error ? err.message : "訂單送出失敗，請稍後再試",
       });
@@ -222,11 +230,91 @@ export default function CheckoutForm({
     }
   };
 
+  const handleSubmit = (e: SubmitEvent) => {
+    e.preventDefault();
+    if (submitting || pendingDuplicate) return;
+    if (totalItems === 0) {
+      setErrors({ cart: "購物車內目前沒有商品，請先向上下訂選購！" });
+      return;
+    }
+    if (!validateForm()) return;
+
+    const snapshot: SubmissionSnapshot = {
+      formData: { ...formData },
+      location:
+        formData.deliveryMethod === "pickup"
+          ? `${formData.city}${formData.township}`
+          : formData.address,
+      request: {
+        customerName: formData.name,
+        phone: formData.phone,
+        deliveryMethod: formData.deliveryMethod,
+        city: formData.city,
+        township: formData.township,
+        address: formData.address,
+        note: formData.remarks,
+        // 只送 id + 數量；價格由後端依商品目錄重算。
+        items: cart.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+      },
+    };
+    void submitOrder(snapshot);
+  };
+
   return (
     <div
       id="checkout-section"
       className="bg-[#f0f3ff] py-16 px-4 sm:px-6 lg:px-8 border-t border-[#dee8ff]"
     >
+      {pendingDuplicate && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00102d]/55 px-4"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="duplicate-order-title"
+          aria-describedby="duplicate-order-message"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[#cfdaf1] bg-white p-6 shadow-xl sm:p-8">
+            <div className="flex items-start gap-3">
+              <TriangleAlert className="mt-0.5 h-6 w-6 flex-shrink-0 text-[#ff900f]" />
+              <div className="space-y-2">
+                <h3
+                  id="duplicate-order-title"
+                  className="text-lg font-black text-[#00102d]"
+                >
+                  請確認訂單
+                </h3>
+                <p
+                  id="duplicate-order-message"
+                  className="text-sm font-medium leading-6 text-[#44474f]"
+                >
+                  系統偵測到您可能已有訂單，請確認是否為重複下單
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => setPendingDuplicate(null)}
+                className="rounded-lg border border-[#0050cc] px-5 py-3 text-sm font-bold text-[#0050cc] transition-colors hover:bg-[#f0f3ff] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                返回確認
+              </button>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => void submitOrder(pendingDuplicate, true)}
+                className="rounded-lg bg-[#00102d] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0050cc] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? "訂單送出中..." : "仍要送出"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl border border-[#dee8ff] p-6 sm:p-8 shadow-md">
           {/* Section Header */}
@@ -323,8 +411,8 @@ export default function CheckoutForm({
                     onChange={handleInputChange}
                     placeholder="請輸入真實姓名"
                     className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.name
-                        ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                        : "border-[#cfdaf1] hover:border-[#485e8a]"
+                      ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                      : "border-[#cfdaf1] hover:border-[#485e8a]"
                       }`}
                   />
                 </div>
@@ -351,8 +439,8 @@ export default function CheckoutForm({
                     onChange={handleInputChange}
                     placeholder="09XXXXXXXX"
                     className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.phone
-                        ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                        : "border-[#cfdaf1] hover:border-[#485e8a]"
+                      ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                      : "border-[#cfdaf1] hover:border-[#485e8a]"
                       }`}
                   />
                 </div>
@@ -386,8 +474,8 @@ export default function CheckoutForm({
                       type="button"
                       onClick={() => handleMethodChange(value)}
                       className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border text-sm font-bold transition-all cursor-pointer active:scale-95 ${active
-                          ? "bg-[#00102d] text-white border-[#00102d] shadow-md"
-                          : "bg-[#f9f9ff] text-[#44474f] border-[#cfdaf1] hover:border-[#485e8a]"
+                        ? "bg-[#00102d] text-white border-[#00102d] shadow-md"
+                        : "bg-[#f9f9ff] text-[#44474f] border-[#cfdaf1] hover:border-[#485e8a]"
                         }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -423,8 +511,8 @@ export default function CheckoutForm({
                           onChange={handleCityChange}
                           disabled={spotsLoading}
                           className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${errors.city
-                              ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                              : "border-[#cfdaf1] hover:border-[#485e8a]"
+                            ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                            : "border-[#cfdaf1] hover:border-[#485e8a]"
                             }`}
                         >
                           <option value="">
@@ -462,8 +550,8 @@ export default function CheckoutForm({
                           onChange={handleInputChange}
                           disabled={!formData.city}
                           className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${errors.township
-                              ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                              : "border-[#cfdaf1] hover:border-[#485e8a]"
+                            ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                            : "border-[#cfdaf1] hover:border-[#485e8a]"
                             }`}
                         >
                           <option value="">
@@ -511,8 +599,8 @@ export default function CheckoutForm({
                     onChange={handleInputChange}
                     placeholder="請輸入完整收件地址"
                     className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.address
-                        ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                        : "border-[#cfdaf1] hover:border-[#485e8a]"
+                      ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
+                      : "border-[#cfdaf1] hover:border-[#485e8a]"
                       }`}
                   />
                   {errors.address && (
@@ -556,7 +644,7 @@ export default function CheckoutForm({
             <div className="pt-2 flex flex-col items-center">
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || pendingDuplicate !== null}
                 className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-[#00102d] hover:bg-[#0050cc] text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="w-4 h-4 rotate-45" />

@@ -19,13 +19,13 @@ test.beforeEach(async ({ page }) => {
 test("宅配下單成功後 reload 自動帶入全部欄位", async ({ page }) => {
   // Scenario: 宅配下單成功 + 有已存資料
   await placeDeliveryOrder(page, {
-    name: "E2E 記憶測試",
+    name: "E2E記憶測試",
     remarks: "E2E 備註",
   });
 
   await page.reload();
 
-  await expect(page.locator('input[name="name"]')).toHaveValue("E2E 記憶測試");
+  await expect(page.locator('input[name="name"]')).toHaveValue("E2E記憶測試");
   await expect(page.locator('input[name="phone"]')).toHaveValue("0912345678");
   // 收件地址欄只在宅配模式渲染：有值即證明 deliveryMethod 也一併帶入
   await expect(page.locator('input[name="address"]')).toHaveValue(
@@ -42,7 +42,7 @@ test("已存縣市下架時地點選單回到請選擇，其餘欄位保留", as
     localStorage.setItem(
       key,
       JSON.stringify({
-        name: "E2E 下架測試",
+        name: "E2E下架測試",
         phone: "0987654321",
         deliveryMethod: "pickup",
         city: "不存在市",
@@ -54,7 +54,7 @@ test("已存縣市下架時地點選單回到請選擇，其餘欄位保留", as
   }, KEY);
   await page.goto("/");
 
-  await expect(page.locator('input[name="name"]')).toHaveValue("E2E 下架測試");
+  await expect(page.locator('input[name="name"]')).toHaveValue("E2E下架測試");
   await expect(page.locator('input[name="phone"]')).toHaveValue("0987654321");
 
   // 等取貨點清單載入完成（載入中選項消失）再驗證清空結果

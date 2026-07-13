@@ -1,5 +1,9 @@
 import { calcLineSubtotal } from "@/app/lib/promotions";
-import { isValidTwMobile, normalizePhone } from "@/app/lib/validation";
+import {
+  isValidCustomerName,
+  isValidTwMobile,
+  normalizePhone,
+} from "@/app/lib/validation";
 import type { DeliveryMethod, PlaceOrderRequest, Product } from "@/types";
 
 export const MAX_QUANTITY = 999;
@@ -17,6 +21,7 @@ export interface OrderLine {
 export interface PreparedOrder {
   customerName: string;
   phone: string;
+  confirmDuplicate: boolean;
   deliveryMethod: DeliveryMethod;
   city: string;
   township: string;
@@ -40,8 +45,12 @@ export function prepareOrder(
 ): PrepareOrderResult {
   if (typeof raw !== "object" || raw === null) return { error: "訂單格式錯誤" };
   const body = raw as Partial<PlaceOrderRequest>;
-  const customerName = clean(body.customerName);
+  const customerName =
+    typeof body.customerName === "string" ? body.customerName : "";
   if (!customerName) return { error: "請輸入收貨姓名" };
+  if (!isValidCustomerName(customerName)) {
+    return { error: "姓名不可包含空白" };
+  }
 
   const phone = clean(body.phone);
   if (!phone) return { error: "請輸入聯絡電話" };
@@ -110,6 +119,7 @@ export function prepareOrder(
     value: {
       customerName,
       phone: normalizePhone(phone),
+      confirmDuplicate: body.confirmDuplicate === true,
       deliveryMethod: body.deliveryMethod,
       city,
       township,
