@@ -3,7 +3,7 @@
 import { useState, ChangeEvent, SubmitEvent } from "react";
 import { Search, Phone, AlertCircle, Store, Truck } from "lucide-react";
 import { LookupOrder } from "../types";
-import { isValidTwMobile } from "../app/lib/validation";
+import { isValidTwMobile, sanitizePhoneInput } from "../app/lib/validation";
 
 // 下單時間以本地格式呈現（查詢結果只在 client 渲染，無 hydration 疑慮）。
 function formatOrderTime(iso: string): string {
@@ -30,7 +30,7 @@ export default function OrderLookup() {
   const [error, setError] = useState("");
 
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setPhone(e.target.value);
+    setPhone(sanitizePhoneInput(e.target.value));
     setError("");
   };
 

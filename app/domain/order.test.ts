@@ -10,7 +10,7 @@ const products: Product[] = [{
 }];
 
 const request: PlaceOrderRequest = {
-  customerName: " 測試者 ", phone: "0912-345-678",
+  customerName: "測試者", phone: "0912-345-678",
   deliveryMethod: "delivery", address: " 台北市測試路 1 號 ",
   items: [{ productId: "1", quantity: 2 }],
 };
@@ -19,9 +19,21 @@ describe("order domain", () => {
   it("normalizes input and prices from the authoritative catalog", () => {
     expect(prepareOrder(request, products)).toMatchObject({ value: {
       customerName: "測試者", phone: "0912345678",
+      confirmDuplicate: false,
       address: "台北市測試路 1 號", total: 540,
       lines: [{ quantity: 2, subtotal: 540 }],
     } });
+  });
+
+  it.each([
+    [undefined, false],
+    [false, false],
+    [true, true],
+    ["true", false],
+    [1, false],
+  ])("only accepts strict true as duplicate confirmation", (input, expected) => {
+    const result = prepareOrder({ ...request, confirmDuplicate: input }, products);
+    expect(result).toMatchObject({ value: { confirmDuplicate: expected } });
   });
 
   it("merges duplicate lines before pricing", () => {
@@ -32,6 +44,10 @@ describe("order domain", () => {
   });
 
   it.each([
+    [{ ...request, customerName: "王 小明" }, "姓名不可包含空白"],
+    [{ ...request, customerName: "王　小明" }, "姓名不可包含空白"],
+    [{ ...request, customerName: "\t測試者" }, "姓名不可包含空白"],
+    [{ ...request, customerName: "測試者\n" }, "姓名不可包含空白"],
     [{ ...request, phone: "123" }, "請輸入有效的台灣手機號碼"],
     [{ ...request, address: "" }, "請輸入收件地址"],
     [{ ...request, items: [{ productId: "9", quantity: 1 }] }, "部分商品已下架，請重新整理購物車"],

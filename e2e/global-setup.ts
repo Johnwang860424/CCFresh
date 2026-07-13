@@ -5,7 +5,7 @@ import path from "node:path";
 // 防止 .env.local 被換成正式庫連線後誤跑測試。
 // 換測試庫時請把新的 host 加進這份清單（進版控、走 PR 審核）。
 const ALLOWED_TEST_DB_HOSTS = [
-  "ep-shy-math-aomig6d3-pooler.c-2.ap-southeast-1.aws.neon.tech",
+  "ep-dry-voice-atwvgc1v-pooler.c-9.us-east-1.aws.neon.tech",
 ];
 
 // 與 Next.js 的優先序一致：已存在的環境變數優先於 .env.local
@@ -49,7 +49,7 @@ export default function globalSetup() {
   if (!ALLOWED_TEST_DB_HOSTS.includes(host)) {
     throw new Error(
       `e2e 防護：DATABASE_URL 指向「${host}」，不在允許的測試庫清單內，拒絕執行（測試會寫入真實訂單，避免污染正式庫）。\n` +
-        `若這確實是新的測試庫，請把該 host 加入 e2e/global-setup.ts 的 ALLOWED_TEST_DB_HOSTS。`,
+      `若這確實是新的測試庫，請把該 host 加入 e2e/global-setup.ts 的 ALLOWED_TEST_DB_HOSTS。`,
     );
   }
 }

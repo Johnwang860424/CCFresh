@@ -26,7 +26,7 @@ test("下單後以電話查得到訂單，連字號格式也命中", async ({ pa
   const hyphenated = `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
 
   await placeDeliveryOrder(page, {
-    name: "E2E 查詢測試",
+    name: "E2E查詢測試",
     phone: hyphenated,
     remarks: "E2E 查詢備註",
   });
@@ -42,7 +42,7 @@ test("下單後以電話查得到訂單，連字號格式也命中", async ({ pa
   });
   // 宅配訂單無站點代碼，取貨號維持純數字（自取訂單為代碼＋數字，如 A3）。
   await expect(section.getByText(/取貨號碼牌 \d+/)).toBeVisible();
-  await expect(section.getByText("訂購人：E2E 查詢測試")).toBeVisible();
+  await expect(section.getByText("訂購人：E2E查詢測試")).toBeVisible();
   await expect(section.getByText("數量: 1")).toBeVisible();
   await expect(section.getByText("總計")).toBeVisible();
   await expect(

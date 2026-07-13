@@ -3,9 +3,15 @@ import { getProducts } from "@/app/lib/products";
 import { prepareOrder, type OrderLine } from "@/app/domain/order";
 import { revalidateCache } from "@/app/lib/revalidate";
 import { normalizePhone } from "@/app/lib/validation";
+import { normalizeCustomerIdentity } from "@/app/domain/duplicate-order";
 import type {
+  DuplicateOrderResponse,
   LookupOrder,
   OrderConfirmation,
+} from "@/types";
+import {
+  DUPLICATE_ORDER_CODE,
+  DUPLICATE_ORDER_MESSAGE,
 } from "@/types";
 
 // pickup_number 撞唯一鍵（併發下單同一取貨點）時的重試次數。
@@ -62,11 +68,25 @@ async function buildStockInsufficientError(
  */
 export async function createOrder(
   raw: unknown,
-): Promise<{ order: OrderConfirmation } | { error: string }> {
+): Promise<
+  | { order: OrderConfirmation }
+  | DuplicateOrderResponse
+  | { error: string }
+> {
   const products = await getProducts();
   const prepared = prepareOrder(raw, products);
   if ("error" in prepared) return prepared;
   const value = prepared.value;
+
+  if (
+    !value.confirmDuplicate &&
+    await hasDuplicateOrder(value.customerName, value.phone)
+  ) {
+    return {
+      code: DUPLICATE_ORDER_CODE,
+      error: DUPLICATE_ORDER_MESSAGE,
+    };
+  }
 
   // 取貨方式相關欄位。
   let pickupSpotId: number | null = null;
@@ -111,6 +131,23 @@ export async function createOrder(
       pickupCode: formatPickupCode(spotCode, result.pickupNumber),
     },
   };
+}
+
+/** 只有去除首尾空白的姓名與正規化電話皆相同才視為疑似重複。 */
+async function hasDuplicateOrder(
+  customerName: string,
+  phone: string,
+): Promise<boolean> {
+  const identity = normalizeCustomerIdentity({ customerName, phone });
+  const rows = (await sql`
+    SELECT EXISTS (
+      SELECT 1
+      FROM orders
+      WHERE customer_name = ${identity.customerName}
+        AND phone = ${identity.phone}
+    ) AS exists
+  `) as { exists: boolean }[];
+  return rows[0]?.exists === true;
 }
 
 interface InsertOrderArgs {
@@ -273,7 +310,7 @@ export async function findOrdersByPhone(
       ) AS items
     FROM orders o
     LEFT JOIN pickup_spots ps ON ps.id = o.pickup_spot_id
-    WHERE regexp_replace(o.phone, '[\\s-]', '', 'g') = ${phone}
+    WHERE o.phone = ${phone}
     ORDER BY o.created_at DESC
   `) as LookupRow[];
   return rows.map(toLookupOrder);
