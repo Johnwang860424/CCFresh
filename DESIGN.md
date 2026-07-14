@@ -48,6 +48,7 @@ colors:
   background: '#f9f9ff'
   on-background: '#111c2c'
   surface-variant: '#d8e3fa'
+  promo: '#c2571b'
 typography:
   display-lg:
     fontFamily: Noto Sans TC
@@ -122,6 +123,7 @@ The palette is anchored by the deep navy blue derived from the core brand mark, 
 - **Secondary (Ice Blue):** A brighter blue used for primary Call-to-Actions (CTAs) and interactive states to keep the UI feeling "fresh" rather than overly heavy.
 - **Surface/Tertiary:** A very light cool-grey used for section backgrounds to provide soft contrast against white cards.
 - **Semantic Palette:** High-visibility tones for status feedback. Success (Green) indicates stock availability and order completion; Warning (Amber) for low stock; Error (Red) for payment or form issues.
+- **Promo (Muted Warm Orange, `#c2571b`):** Reserved exclusively for promotion signals — the discount badge on product cards and lightbox accents. Never used for CTAs or interactive states; those stay in the blue family.
 
 ## Typography
 

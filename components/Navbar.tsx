@@ -41,7 +41,7 @@ export default function Navbar({
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#e7eeff]/90 backdrop-blur-md border-b border-[#cfdaf1] transition-all duration-300">
+    <nav className="sticky top-0 z-50 bg-surface-container/90 backdrop-blur-md border-b border-surface-dim transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* Logo Brand */}
@@ -57,11 +57,11 @@ export default function Navbar({
               alt="CC 生鮮"
               width={40}
               height={40}
-              className="w-10 h-10 rounded-full object-cover shadow-md border border-[#0266ff]/20 transition-all duration-300 group-hover:scale-105 group-hover:rotate-6"
+              className="w-10 h-10 rounded-full object-cover shadow-md border border-secondary-bright/20 transition-all duration-300 group-hover:scale-105 group-hover:rotate-6"
               priority
             />
             <div className="flex flex-col">
-              <span className="text-xl font-black text-[#00102d] tracking-wide font-sans">
+              <span className="text-xl font-black text-primary tracking-wide font-sans">
                 CC 生鮮
               </span>
             </div>
@@ -77,13 +77,13 @@ export default function Navbar({
                   onClick={() => handleNavClick(item.key)}
                   className={`relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none ${
                     isActive
-                      ? "text-[#0050cc] scale-[1.03]"
-                      : "text-[#44474f] hover:text-[#00102d]"
+                      ? "text-secondary scale-[1.03]"
+                      : "text-on-surface-variant hover:text-primary"
                   }`}
                 >
                   {item.name}
                   {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0050cc] rounded-full" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary rounded-full" />
                   )}
                 </button>
               );
@@ -92,7 +92,7 @@ export default function Navbar({
             {/* 查詢訂單：捲動到查詢區塊，非分類、無 active 狀態 */}
             <button
               onClick={handleLookupClick}
-              className="relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none text-[#44474f] hover:text-[#00102d]"
+              className="relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none text-on-surface-variant hover:text-primary"
             >
               查詢訂單
             </button>
@@ -102,12 +102,12 @@ export default function Navbar({
           <div className="flex items-center space-x-4">
             <button
               onClick={onCartClick}
-              className="relative p-2.5 rounded-full bg-white hover:bg-[#e7eeff] text-[#00102d] transition-all duration-200 border border-[#dee8ff] hover:border-[#cfdaf1] cursor-pointer shadow-sm group"
+              className="relative p-2.5 rounded-full bg-white hover:bg-surface-container text-primary transition-all duration-200 border border-surface-container-high hover:border-surface-dim cursor-pointer shadow-sm group"
               aria-label="Shopping Cart"
             >
               <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#ba1a1a] text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center animate-pulse shadow-md border border-white">
+                <span className="absolute -top-1 -right-1 bg-error text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center animate-pulse shadow-md border border-white">
                   {totalItems}
                 </span>
               )}
@@ -116,7 +116,7 @@ export default function Navbar({
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md text-[#44474f] hover:text-[#00102d] hover:bg-[#f0f3ff] transition-all"
+              className="md:hidden p-2 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-all"
               aria-label="Toggle Menu"
             >
               {mobileMenuOpen ? (
@@ -131,7 +131,7 @@ export default function Navbar({
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#dee8ff] py-3 px-4 space-y-2 shadow-inner">
+        <div className="md:hidden bg-white border-b border-surface-container-high py-3 px-4 space-y-2 shadow-inner">
           {categories.map((item) => {
             const isActive = activeCategory === item.key;
             return (
@@ -140,8 +140,8 @@ export default function Navbar({
                 onClick={() => handleNavClick(item.key)}
                 className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                   isActive
-                    ? "bg-[#e7eeff] text-[#0050cc]"
-                    : "text-[#44474f] hover:bg-[#f9f9ff] hover:text-[#00102d]"
+                    ? "bg-surface-container text-secondary"
+                    : "text-on-surface-variant hover:bg-surface hover:text-primary"
                 }`}
               >
                 {item.name}
@@ -152,7 +152,7 @@ export default function Navbar({
           {/* 查詢訂單：捲動到查詢區塊並收合選單 */}
           <button
             onClick={handleLookupClick}
-            className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all text-[#44474f] hover:bg-[#f9f9ff] hover:text-[#00102d]"
+            className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all text-on-surface-variant hover:bg-surface hover:text-primary"
           >
             查詢訂單
           </button>

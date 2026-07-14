@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "產地直達，鮮味直送。急凍真鮮冷鏈宅配。",
     start_url: "/",
     display: "standalone",
-    // 色票須與 app/globals.css @theme 的 --color-brand-surface /
-    // --color-brand-primary 同步（manifest 無法讀 CSS 變數）
+    // 色票須與 app/globals.css @theme 的 --color-surface /
+    // --color-primary 同步（manifest 無法讀 CSS 變數）
     background_color: "#f9f9ff",
     theme_color: "#00102d",
     icons: [

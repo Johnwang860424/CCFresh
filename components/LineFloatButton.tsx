@@ -16,7 +16,7 @@ export default function LineFloatButton() {
       transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 20 }}
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.95 }}
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#06C755] px-4 py-3 text-white shadow-xl shadow-[#06C755]/30 transition-colors hover:bg-[#05b34c] sm:bottom-6 sm:right-6"
+      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#06C755] px-4 py-3 text-white shadow-lg transition-colors hover:bg-[#05b34c] sm:bottom-6 sm:right-6"
     >
       {/* LINE 官方圖示 */}
       <svg
