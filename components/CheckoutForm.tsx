@@ -397,7 +397,7 @@ export default function CheckoutForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 姓名 Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                <label htmlFor="checkout-name" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
                   <User className="w-3.5 h-3.5 text-secondary" />
                   <span>
                     姓名 <span className="text-error">*</span>
@@ -405,8 +405,10 @@ export default function CheckoutForm({
                 </label>
                 <div className="relative">
                   <input
+                    id="checkout-name"
                     type="text"
                     name="name"
+                    autoComplete="name"
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="請輸入真實姓名"
@@ -425,7 +427,7 @@ export default function CheckoutForm({
 
               {/* 聯絡電話 Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                <label htmlFor="checkout-phone" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
                   <Phone className="w-3.5 h-3.5 text-secondary" />
                   <span>
                     聯絡電話 <span className="text-error">*</span>
@@ -433,8 +435,11 @@ export default function CheckoutForm({
                 </label>
                 <div className="relative">
                   <input
-                    type="text"
+                    id="checkout-phone"
+                    type="tel"
+                    inputMode="numeric"
                     name="phone"
+                    autoComplete="tel"
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="09XXXXXXXX"
@@ -489,7 +494,7 @@ export default function CheckoutForm({
             {formData.deliveryMethod === "pickup" ? (
               /* 指定地點自取：先選縣市，再選鄉鎮市區 */
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                <label htmlFor="checkout-city" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
                   <MapPin className="w-3.5 h-3.5 text-secondary" />
                   <span>
                     取貨地點 <span className="text-error">*</span>
@@ -506,6 +511,7 @@ export default function CheckoutForm({
                     <div className="space-y-1.5">
                       <div className="relative">
                         <select
+                          id="checkout-city"
                           name="city"
                           value={formData.city}
                           onChange={handleCityChange}
@@ -545,6 +551,7 @@ export default function CheckoutForm({
                     <div className="space-y-1.5">
                       <div className="relative">
                         <select
+                          aria-label="取貨地點（鄉鎮市區）"
                           name="township"
                           value={formData.township}
                           onChange={handleInputChange}
@@ -586,15 +593,17 @@ export default function CheckoutForm({
               /* 宅配到府：自行填寫收件地址 */
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                  <label htmlFor="checkout-address" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
                     <Home className="w-3.5 h-3.5 text-secondary" />
                     <span>
                       收件地址 <span className="text-error">*</span>
                     </span>
                   </label>
                   <input
+                    id="checkout-address"
                     type="text"
                     name="address"
+                    autoComplete="street-address"
                     value={formData.address}
                     onChange={handleInputChange}
                     placeholder="請輸入完整收件地址"
@@ -609,16 +618,24 @@ export default function CheckoutForm({
                     </p>
                   )}
                 </div>
+
+                {/* 運費在下單前先揭露，與訂單成功彈窗的運費資訊一致 */}
+                <div className="p-3 bg-surface-container-low border border-surface-dim rounded-lg text-xs font-medium text-on-surface-variant space-y-1">
+                  <p className="font-bold text-primary">運費另計</p>
+                  <p>711店到店（10公斤）NT$ 150；宅配（20公斤）NT$ 250</p>
+                  <p>下單後由客服與您確認運費並提供匯款帳號。</p>
+                </div>
               </div>
             )}
 
             {/* 備註 Textarea */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+              <label htmlFor="checkout-remarks" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
                 <FileText className="w-3.5 h-3.5 text-secondary" />
                 <span>備註</span>
               </label>
               <textarea
+                id="checkout-remarks"
                 name="remarks"
                 value={formData.remarks}
                 onChange={handleInputChange}

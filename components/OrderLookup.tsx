@@ -84,13 +84,16 @@ export default function OrderLookup() {
 
           {/* 查詢表單：單一電話輸入 + 查詢按鈕 */}
           <form onSubmit={handleSubmit} className="space-y-1.5">
-            <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+            <label htmlFor="lookup-phone" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
               <Phone className="w-3.5 h-3.5 text-secondary" />
               <span>訂購時的聯絡電話</span>
             </label>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
-                type="text"
+                id="lookup-phone"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
                 value={phone}
                 onChange={handlePhoneChange}
                 placeholder="09XXXXXXXX"

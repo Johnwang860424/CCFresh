@@ -75,7 +75,7 @@ export default function Navbar({
                 <button
                   key={item.key}
                   onClick={() => handleNavClick(item.key)}
-                  className={`relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none ${
+                  className={`relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 rounded ${
                     isActive
                       ? "text-secondary scale-[1.03]"
                       : "text-on-surface-variant hover:text-primary"
@@ -92,7 +92,7 @@ export default function Navbar({
             {/* 查詢訂單：捲動到查詢區塊，非分類、無 active 狀態 */}
             <button
               onClick={handleLookupClick}
-              className="relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none text-on-surface-variant hover:text-primary"
+              className="relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 rounded text-on-surface-variant hover:text-primary"
             >
               查詢訂單
             </button>
@@ -107,7 +107,7 @@ export default function Navbar({
             >
               <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-error text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center animate-pulse shadow-md border border-white">
+                <span className="absolute -top-1 -right-1 bg-error text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center shadow-md border border-white">
                   {totalItems}
                 </span>
               )}

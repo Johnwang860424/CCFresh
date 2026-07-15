@@ -87,7 +87,14 @@ export default function ProductCard({
   };
 
   return (
-    <div className="w-full h-full bg-white rounded-xl border border-surface-container-high overflow-hidden shadow-sm hover:shadow-[0_4px_20px_rgba(10,37,78,0.1)] transition-shadow duration-300 flex flex-col group relative">
+    // 已加入購物車的卡片以品牌藍外框標示選取狀態
+    <div
+      className={`w-full h-full bg-white rounded-xl border overflow-hidden shadow-sm hover:shadow-[0_4px_20px_rgba(10,37,78,0.1)] transition-all duration-300 flex flex-col group relative ${
+        quantity > 0
+          ? "border-secondary ring-1 ring-secondary"
+          : "border-surface-container-high"
+      }`}
+    >
       {/* Product Image Stage */}
       <div
         onClick={() => openZoom(currentImageIndex)}
@@ -107,8 +114,8 @@ export default function ProductCard({
         {/* 售完遮罩：使用冰霜毛玻璃質感，並讓內部的「售完」徽章有精緻感 */}
         {isSoldOut && (
           <div className="absolute inset-0 z-10 bg-white/30 backdrop-blur-[3px] border border-white/10 flex items-center justify-center pointer-events-none">
-            <span className="px-5 py-2 rounded-full bg-primary/90 text-white text-xs font-black tracking-[0.2em] shadow-lg border border-white/20 uppercase">
-              售完 OUT OF STOCK
+            <span className="px-5 py-2 rounded-full bg-primary/90 text-white text-xs font-black tracking-[0.2em] shadow-lg border border-white/20">
+              售完
             </span>
           </div>
         )}
@@ -126,7 +133,7 @@ export default function ProductCard({
               src={product.images[currentImageIndex] || "/placeholder.jpg"}
               alt={`${product.name} - 圖片 ${currentImageIndex + 1}`}
               fill
-              sizes="(max-width: 640px) 80vw, (max-width: 1024px) 50vw, 33vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className={`object-cover group-hover:scale-105 transition-transform duration-500 ${
                 isSoldOut ? "grayscale-[45%] brightness-[92%] opacity-75" : ""
               }`}
@@ -214,8 +221,9 @@ export default function ProductCard({
         )}
 
         {/* Pricing & Cart Action Block */}
-        <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-surface-container-low gap-2">
-          <div className="flex items-baseline gap-1.5">
+        {/* flex-wrap：卡片夠寬時價格與按鈕同列，太窄時按鈕整顆掉到下一行，價格永不換行 */}
+        <div className="mt-auto flex flex-wrap items-center justify-between pt-2 border-t border-surface-container-low gap-2">
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
             <span className="text-xs text-on-surface-variant">會員價</span>
             <span className="text-xl font-bold text-secondary font-sans">
               NT$ {product.price.toLocaleString()}
@@ -223,7 +231,7 @@ export default function ProductCard({
           </div>
 
           {/* Animating Action Block with Quick Add Stepper */}
-          <div className="h-10 w-full sm:w-32 flex items-center justify-start sm:justify-end">
+          <div className="h-10 flex-1 min-w-32 flex items-center">
             <AnimatePresence mode="wait">
               {quantity === 0 ? (
                 <motion.button
@@ -255,7 +263,7 @@ export default function ProductCard({
                   {/* Minus button */}
                   <button
                     onClick={() => onRemoveOneFromCart(product.id)}
-                    className="w-7 h-7 bg-white hover:bg-surface-container-high text-primary rounded-full flex items-center justify-center focus:outline-none transition-colors border border-surface-container-low cursor-pointer"
+                    className="w-7 h-7 bg-white hover:bg-surface-container-high text-primary rounded-full flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary transition-colors border border-surface-container-low cursor-pointer"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="w-3 h-3 text-on-surface-variant hover:text-primary" />
@@ -270,7 +278,7 @@ export default function ProductCard({
                   <button
                     onClick={() => onAddToCart(product)}
                     disabled={isMaxReached}
-                    className={`w-7 h-7 rounded-full flex items-center justify-center focus:outline-none transition-all shadow-sm ${
+                    className={`w-7 h-7 rounded-full flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 transition-all shadow-sm ${
                       isMaxReached
                         ? "bg-surface-dim text-on-surface-variant cursor-not-allowed"
                         : "bg-secondary hover:bg-secondary-bright text-white cursor-pointer active:scale-95"
@@ -311,7 +319,7 @@ export default function ProductCard({
               <div className="relative w-full h-[55vh] sm:h-[65vh] pointer-events-auto rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-primary/60 flex items-center justify-center">
                 {isLargeImageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-primary/30 backdrop-blur-sm z-10">
-                    <Loader2 className="w-10 h-10 text-promo animate-spin" />
+                    <Loader2 className="w-10 h-10 text-white/80 animate-spin" />
                   </div>
                 )}
                 <Image
@@ -332,7 +340,7 @@ export default function ProductCard({
                   <>
                     <button
                       onClick={() => stepZoomedImage(-1)}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-promo text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer active:scale-95 flex items-center justify-center"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-secondary text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer active:scale-95 flex items-center justify-center"
                       aria-label="Previous image"
                     >
                       <ChevronLeft className="w-6 h-6" />
@@ -340,7 +348,7 @@ export default function ProductCard({
 
                     <button
                       onClick={() => stepZoomedImage(1)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-promo text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer active:scale-95 flex items-center justify-center"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-secondary text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer active:scale-95 flex items-center justify-center"
                       aria-label="Next image"
                     >
                       <ChevronRight className="w-6 h-6" />
@@ -352,7 +360,7 @@ export default function ProductCard({
               {/* Close Button */}
               <button
                 onClick={() => setIsZoomed(false)}
-                className="absolute top-4 right-4 bg-primary/80 hover:bg-promo text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer pointer-events-auto active:scale-95 flex items-center justify-center"
+                className="absolute top-4 right-4 bg-primary/80 hover:bg-secondary text-white rounded-full p-2.5 backdrop-blur-sm transition-all duration-200 shadow-lg border border-white/10 cursor-pointer pointer-events-auto active:scale-95 flex items-center justify-center"
                 aria-label="Close image zoom"
               >
                 <X className="w-5 h-5" />
@@ -360,14 +368,14 @@ export default function ProductCard({
 
               {/* Thumbnail Strip inside Lightbox */}
               {product.images && product.images.length > 1 && (
-                <div className="mt-4 flex space-x-2 overflow-x-auto py-1 px-2 max-w-full pointer-events-auto scrollbar-thin scrollbar-thumb-white/20">
+                <div className="mt-4 flex space-x-2 overflow-x-auto py-1 px-2 max-w-full pointer-events-auto">
                   {product.images.map((imgUrl, idx) => (
                     <button
                       key={idx}
                       onClick={() => showZoomedImage(idx)}
                       className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 cursor-pointer transition-all active:scale-95 flex-shrink-0 bg-primary ${
                         idx === zoomedImageIndex
-                          ? "border-promo scale-105 shadow-md"
+                          ? "border-secondary-bright scale-105 shadow-md"
                           : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                     >
