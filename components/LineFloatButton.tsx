@@ -4,7 +4,8 @@ import { motion } from "motion/react";
 
 const LINE_ADD_FRIEND_URL = "https://line.me/R/ti/p/@cc8888";
 
-export default function LineFloatButton() {
+// lifted：底部結帳列出現時上移，避免被蓋住
+export default function LineFloatButton({ lifted = false }: { lifted?: boolean }) {
   return (
     <motion.a
       href={LINE_ADD_FRIEND_URL}
@@ -16,7 +17,9 @@ export default function LineFloatButton() {
       transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 20 }}
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.95 }}
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-[#06C755] px-4 py-3 text-white shadow-xl shadow-[#06C755]/30 transition-colors hover:bg-[#05b34c] sm:bottom-6 sm:right-6"
+      className={`fixed right-5 z-50 flex items-center gap-2 rounded-full bg-[#06C755] px-4 py-3 text-white shadow-lg transition-all hover:bg-[#05b34c] sm:right-6 ${
+        lifted ? "bottom-24" : "bottom-5 sm:bottom-6"
+      }`}
     >
       {/* LINE 官方圖示 */}
       <svg

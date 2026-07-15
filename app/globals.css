@@ -5,18 +5,28 @@
   --font-sans: 'Noto Sans TC', 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Noto Sans TC', system-ui, sans-serif;
   
-  --color-brand-primary: #00102d;
-  --color-brand-secondary: #0050cc;
-  --color-brand-accent: #0266ff;
-  --color-brand-surface: #f9f9ff;
-  --color-brand-surface-dim: #cfdaf1;
-  --color-brand-on-surface: #111c2c;
+  /* 色彩 token 唯一來源（值取自 DESIGN.md 調色盤），元件一律引用 token、不硬編碼 hex */
+  --color-surface: #f9f9ff;
+  --color-surface-container-low: #f0f3ff;
+  --color-surface-container: #e7eeff;
+  --color-surface-container-high: #dee8ff;
+  --color-surface-dim: #cfdaf1;
+  --color-on-surface: #111c2c;
+  --color-on-surface-variant: #44474f;
+  --color-primary: #00102d;
+  --color-secondary: #0050cc;
+  --color-secondary-bright: #0266ff;
+  --color-promo: #c2571b;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-surface-tint: #485e8a;
+  --color-primary-fixed-dim: #b0c6f9;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-brand-surface);
-  color: var(--color-brand-on-surface);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
   scroll-behavior: smooth;
 }
 

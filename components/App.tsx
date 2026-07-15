@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useMemo, ReactNode } from "react";
-import { motion } from "motion/react";
+import { motion, MotionConfig } from "motion/react";
 import {
   ShoppingCart,
   ArrowRight,
   MapPin,
-  PhoneCall,
+  ShieldCheck,
   Timer,
 } from "lucide-react";
 import Navbar from "./Navbar";
@@ -57,7 +57,7 @@ const DESKTOP_LAYOUTS = [
 const TRUST_BADGES = [
   { Icon: Timer, text: "24小時全程低溫冷鏈" },
   { Icon: MapPin, text: "定點交貨安心取" },
-  { Icon: PhoneCall, text: "產銷透明食材把關" },
+  { Icon: ShieldCheck, text: "產銷透明食材把關" },
 ];
 
 function scrollToSection(id: string) {
@@ -69,8 +69,8 @@ function scrollToSection(id: string) {
 // 商品區的載入中／錯誤／空分類共用同一種狀態框
 function StatusPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="text-center py-16 bg-slate-950/40 rounded-2xl border border-slate-900 max-w-lg mx-auto">
-      <p className="text-slate-400 font-sans text-sm font-medium">{children}</p>
+    <div className="text-center py-16 bg-white rounded-2xl border border-surface-container-high max-w-lg mx-auto">
+      <p className="text-on-surface-variant font-sans text-sm font-medium">{children}</p>
     </div>
   );
 }
@@ -107,6 +107,18 @@ export default function App() {
     null,
   );
   const [columns, setColumns] = useState<number>(4);
+  const [isCheckoutInView, setIsCheckoutInView] = useState(false);
+
+  // 結帳區進入視野時隱藏底部結帳列，避免蓋住表單
+  useEffect(() => {
+    const el = document.getElementById("checkout-section");
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) =>
+      setIsCheckoutInView(entry.isIntersecting),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const gridClass = GRID_CLASS_BY_COLUMNS[columns];
 
@@ -115,10 +127,10 @@ export default function App() {
       <button
         key={label}
         onClick={() => setColumns(value)}
-        className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+        className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 ${
           isActive(columns)
-            ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
-            : "text-slate-400 hover:text-white"
+            ? "bg-secondary text-white"
+            : "text-on-surface-variant hover:text-primary"
         }`}
       >
         {label}
@@ -205,9 +217,12 @@ export default function App() {
     0,
   );
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const showCartBar = totalCartCount > 0 && !isCheckoutInView;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 selection:bg-[#0050cc] selection:text-white">
+    // MotionConfig reducedMotion="user"：系統開啟「減少動態效果」時停用全站 motion 動畫
+    <MotionConfig reducedMotion="user">
+    <div className="min-h-screen flex flex-col bg-surface selection:bg-secondary selection:text-white">
       {/* Navigation Headers */}
       <Navbar
         cart={cart}
@@ -223,21 +238,18 @@ export default function App() {
       {/* Featured Products Showcases ("精選商品") with Dark Charcoal Premium Aesthetics */}
       <section
         id="featured-products"
-        className="bg-[#02050c] text-white py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden border-t border-[#00102d]"
+        className="bg-surface-container py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden border-t border-surface-dim"
       >
-        {/* Abstract Ice Grid Overlay for Icy Fresh Feel */}
-        <div className="absolute inset-0 opacity-5 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Section Section Header Title */}
           <div className="text-center mb-16 space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black font-sans tracking-wide text-white">
+            <h2 className="text-3xl sm:text-4xl font-black font-sans tracking-wide text-primary">
               精選商品
             </h2>
 
-            <div className="w-16 h-1 bg-[#0050cc] mx-auto rounded-full" />
+            <div className="w-16 h-1 bg-secondary mx-auto rounded-full" />
 
-            <p className="text-sm text-[#bebfe1] font-medium max-w-xl mx-auto font-sans">
+            <p className="text-sm text-on-surface-variant font-medium max-w-xl mx-auto font-sans">
               急速冷凍真空技術，完美鎖定頂級食材最初的新鮮、甜美與精緻口感。
             </p>
           </div>
@@ -249,7 +261,7 @@ export default function App() {
             const isScrollable = categories.length > 4;
             return (
               <div
-                className={`flex gap-2.5 mb-10 mx-auto bg-slate-900/50 p-1.5 rounded-xl border border-slate-800 backdrop-blur-sm ${
+                className={`flex gap-2.5 mb-10 mx-auto bg-white p-1.5 rounded-xl border border-surface-container-high shadow-[0_4px_20px_rgba(10,37,78,0.05)] ${
                   isScrollable
                     ? "w-fit max-w-full md:max-w-2xl overflow-x-auto snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                     : "justify-center flex-wrap max-w-md"
@@ -261,14 +273,14 @@ export default function App() {
                     <button
                       key={tab.key}
                       onClick={() => setSelectedCategory(tab.key)}
-                      className={`py-1.5 px-3.5 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none ${
+                      className={`py-1.5 px-3.5 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 ${
                         isScrollable
                           ? "flex-none snap-start whitespace-nowrap"
                           : "flex-1"
                       } ${
                         isActive
-                          ? "bg-[#0050cc] text-white shadow-md shadow-[#0050cc]/25"
-                          : "text-slate-400 hover:text-white"
+                          ? "bg-secondary text-white"
+                          : "text-on-surface-variant hover:text-primary"
                       }`}
                     >
                       {tab.name}
@@ -281,8 +293,8 @@ export default function App() {
 
           {/* Column Layout Switcher */}
           <div className="flex justify-end items-center mb-8 max-w-6xl mx-auto px-4 sm:px-0">
-            <div className="flex items-center space-x-1 bg-slate-900/50 p-1 rounded-xl border border-slate-800 backdrop-blur-sm">
-              <span className="text-xs text-slate-400 font-bold px-2.5 select-none font-sans">版面排列：</span>
+            <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-surface-container-high shadow-[0_4px_20px_rgba(10,37,78,0.05)]">
+              <span className="text-xs text-on-surface-variant font-bold px-2.5 select-none font-sans">版面排列：</span>
               
               {/* Mobile Controls */}
               <div className="flex sm:hidden space-x-1">
@@ -320,51 +332,18 @@ export default function App() {
             <StatusPanel>該分類目前尚無現貨商品</StatusPanel>
           )}
 
-          {/* Floating shopping call-to-action bottom banner once cart is active */}
-          {totalCartCount > 0 && (
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="mt-16 max-w-3xl mx-auto bg-slate-900/90 border border-[#dee8ff]/10 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl backdrop-blur-md"
-            >
-              <div className="flex items-center space-x-3 text-left">
-                <div className="p-3 bg-[#0050cc] text-white rounded-xl shadow-lg shadow-[#0050cc]/25">
-                  <ShoppingCart className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-white">
-                    已選購 {totalCartCount} 項商品
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    目前商品計價 NT${" "}
-                    <span className="text-white font-mono font-bold text-sm">
-                      {totalCartPrice.toLocaleString()}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={scrollToCheckout}
-                className="w-full sm:w-auto px-6 py-2.5 bg-[#0050cc] hover:bg-[#0266ff] text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-2 shadow-md hover:shadow-lg cursor-pointer"
-              >
-                <span>下一步：填寫收件資訊</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </motion.div>
-          )}
         </div>
       </section>
 
       {/* Brand Attributes / Trust Badges Section */}
-      <section className="bg-white py-12 border-y border-[#e7eeff] px-4 sm:px-6 lg:px-8">
+      <section className="bg-white py-12 border-y border-surface-container px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-6 text-center">
           {TRUST_BADGES.map(({ Icon, text }) => (
             <div key={text} className="flex flex-col items-center space-y-2">
-              <div className="w-12 h-12 bg-[#f0f3ff] rounded-full flex items-center justify-center text-[#0050cc] mb-1">
+              <div className="w-12 h-12 bg-surface-container-low rounded-full flex items-center justify-center text-secondary mb-1">
                 <Icon className="w-6 h-6" />
               </div>
-              <h3 className="text-[#00102d] text-sm font-black font-sans">
+              <h3 className="text-primary text-sm font-black font-sans">
                 {text}
               </h3>
             </div>
@@ -383,7 +362,7 @@ export default function App() {
       <OrderLookup />
 
       {/* Elegant minimalist footer */}
-      <footer className="bg-[#00102d] text-white/50 text-[11px] py-10 text-center border-t border-[#dee8ff]/10 font-medium font-sans">
+      <footer className="bg-primary text-white/50 text-[11px] py-10 text-center border-t border-white/10 font-medium font-sans">
         <div className="max-w-7xl mx-auto px-4 space-y-3">
           <p className="text-white/85 text-sm font-black font-sans">
             CC 生鮮 - 嚴選產地，鎖住甘甜
@@ -394,8 +373,44 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Floating LINE add-friend button */}
-      <LineFloatButton />
+      {/* 固定底部結帳列：購物車有商品且結帳區不在視野內時顯示 */}
+      {showCartBar && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-surface-container-high px-4 py-3 shadow-[0_-4px_20px_rgba(10,37,78,0.08)]"
+        >
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center space-x-3 text-left">
+              <div className="p-2.5 bg-secondary text-white rounded-xl">
+                <ShoppingCart className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-primary">
+                  已選購 {totalCartCount} 項商品
+                </h4>
+                <p className="text-xs text-on-surface-variant">
+                  商品小計 NT${" "}
+                  <span className="text-primary font-mono font-bold text-sm">
+                    {totalCartPrice.toLocaleString()}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={scrollToCheckout}
+              className="shrink-0 px-5 py-2.5 bg-secondary hover:bg-secondary-bright text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center space-x-2 shadow-md hover:shadow-lg cursor-pointer"
+            >
+              <span>前往結帳</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Floating LINE add-friend button（結帳列出現時上移避開） */}
+      <LineFloatButton lifted={showCartBar} />
 
       {/* Order success summary overlay modal */}
       {submittedForm && confirmation && (
@@ -408,5 +423,6 @@ export default function App() {
         />
       )}
     </div>
+    </MotionConfig>
   );
 }

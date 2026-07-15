@@ -56,7 +56,7 @@ export default function PwaInstallPrompt() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.15 }}
-      className="bg-gradient-to-r from-[#0050cc] to-[#00102d] rounded-xl p-4 shadow-md flex items-center gap-3"
+      className="bg-gradient-to-r from-secondary to-primary rounded-xl p-4 shadow-md flex items-center gap-3"
       data-testid="pwa-install-prompt"
     >
       <div className="bg-white/15 rounded-full p-2 shrink-0">
@@ -78,7 +78,7 @@ export default function PwaInstallPrompt() {
       </div>
       <button
         onClick={() => setIsTutorialOpen(true)}
-        className="shrink-0 bg-white text-[#0050cc] text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#dee8ff] transition-colors active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
+        className="shrink-0 bg-white text-secondary text-xs font-bold px-3 py-2 rounded-lg hover:bg-surface-container-high transition-colors active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
       >
         查看教學
       </button>
@@ -92,11 +92,11 @@ export default function PwaInstallPrompt() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={() => setIsTutorialOpen(false)}
-              className="absolute inset-0 bg-[#00102d]/90 backdrop-blur-sm"
+              className="absolute inset-0 bg-primary/90 backdrop-blur-sm"
             />
             <button
               onClick={() => setIsTutorialOpen(false)}
-              className="absolute top-4 right-4 z-10 text-white hover:text-[#b0c6f9] transition-colors p-2 rounded-full hover:bg-white/10 cursor-pointer"
+              className="absolute top-4 right-4 z-10 text-white hover:text-primary-fixed-dim transition-colors p-2 rounded-full hover:bg-white/10 cursor-pointer"
               aria-label="關閉教學"
             >
               <X className="w-6 h-6" />

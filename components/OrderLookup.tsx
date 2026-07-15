@@ -70,46 +70,49 @@ export default function OrderLookup() {
   return (
     <div
       id="order-lookup"
-      className="bg-white py-16 px-4 sm:px-6 lg:px-8 border-t border-[#dee8ff]"
+      className="bg-white py-16 px-4 sm:px-6 lg:px-8 border-t border-surface-container-high"
     >
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl border border-[#dee8ff] p-6 sm:p-8 shadow-md">
+        <div className="bg-white rounded-2xl border border-surface-container-high p-6 sm:p-8 shadow-md">
           {/* Section Header */}
-          <div className="flex items-center space-x-3 pb-5 border-b border-[#e7eeff] mb-6">
-            <Search className="w-6 h-6 text-[#0050cc]" />
-            <h2 className="text-xl sm:text-2xl font-black text-[#00102d] font-sans tracking-wide">
+          <div className="flex items-center space-x-3 pb-5 border-b border-surface-container mb-6">
+            <Search className="w-6 h-6 text-secondary" />
+            <h2 className="text-xl sm:text-2xl font-black text-primary font-sans tracking-wide">
               查詢訂單
             </h2>
           </div>
 
           {/* 查詢表單：單一電話輸入 + 查詢按鈕 */}
           <form onSubmit={handleSubmit} className="space-y-1.5">
-            <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
-              <Phone className="w-3.5 h-3.5 text-[#0050cc]" />
+            <label htmlFor="lookup-phone" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+              <Phone className="w-3.5 h-3.5 text-secondary" />
               <span>訂購時的聯絡電話</span>
             </label>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
-                type="text"
+                id="lookup-phone"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
                 value={phone}
                 onChange={handlePhoneChange}
                 placeholder="09XXXXXXXX"
-                className={`flex-1 px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${error
-                  ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                  : "border-[#cfdaf1] hover:border-[#485e8a]"
+                className={`flex-1 px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-secondary ${error
+                  ? "border-error focus:ring-error/40"
+                  : "border-surface-dim hover:border-surface-tint"
                   }`}
               />
               <button
                 type="submit"
                 disabled={searching}
-                className="px-8 py-3 bg-[#00102d] hover:bg-[#0050cc] text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-8 py-3 bg-primary hover:bg-secondary text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Search className="w-4 h-4" />
                 <span>{searching ? "查詢中..." : "查詢"}</span>
               </button>
             </div>
             {error && (
-              <p className="text-xs font-bold text-[#ba1a1a] flex items-center space-x-1">
+              <p className="text-xs font-bold text-error flex items-center space-x-1">
                 <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{error}</span>
               </p>
@@ -119,14 +122,14 @@ export default function OrderLookup() {
           {/* 查詢結果：固定高度內部捲動，頁面長度不隨訂單數增加 */}
           {orders !== null &&
             (orders.length === 0 ? (
-              <div className="mt-6 text-center py-10 bg-[#f9f9ff] rounded-xl border border-[#e7eeff]">
-                <p className="text-[#44474f] font-sans text-sm font-medium">
+              <div className="mt-6 text-center py-10 bg-surface rounded-xl border border-surface-container">
+                <p className="text-on-surface-variant font-sans text-sm font-medium">
                   查無此電話的訂單
                 </p>
               </div>
             ) : (
               <div className="mt-6 space-y-3">
-                <p className="text-xs font-bold text-[#44474f] font-sans">
+                <p className="text-xs font-bold text-on-surface-variant font-sans">
                   共 {orders.length} 筆訂單
                 </p>
                 <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
@@ -135,35 +138,35 @@ export default function OrderLookup() {
                     return (
                       <div
                         key={order.id}
-                        className="bg-[#f0f3ff] border border-[#cfdaf1] rounded-xl p-4 sm:p-5 space-y-3"
+                        className="bg-surface-container-low border border-surface-dim rounded-xl p-4 sm:p-5 space-y-3"
                       >
                         {/* 主要資訊：編號 + 姓名 */}
                         <div className="flex justify-between items-baseline gap-3">
-                          <span className="text-base font-black text-[#00102d] font-sans">
+                          <span className="text-base font-black text-primary font-sans">
                             取貨號碼牌 {order.pickupCode}
                           </span>
-                          <span className="text-xs font-medium text-[#44474f]">
+                          <span className="text-xs font-medium text-on-surface-variant">
                             {formatOrderTime(order.createdAt)}
                           </span>
                         </div>
-                        <p className="text-sm font-bold text-[#111c2c] font-sans">
+                        <p className="text-sm font-bold text-on-surface font-sans">
                           訂購人：{order.customerName}
                         </p>
 
                         {/* 品項明細（正常訂單必有品項，空陣列僅防禦性略過） */}
                         {order.items.length > 0 && (
-                          <div className="space-y-2 border-y border-[#cfdaf1]/50 py-3 bg-white/40 rounded-lg px-1">
+                          <div className="space-y-2 border-y border-surface-dim/50 py-3 bg-white/40 rounded-lg px-1">
                             {order.items.map((item, idx) => (
                               <div
                                 key={idx}
-                                className="flex justify-between items-center text-xs font-sans text-[#111c2c] px-2 py-1 bg-white/60 rounded"
+                                className="flex justify-between items-center text-xs font-sans text-on-surface px-2 py-1 bg-white/60 rounded"
                               >
                                 <span className="font-semibold">{item.name}</span>
                                 <div className="flex items-center space-x-3">
-                                  <span className="text-[#44474f]">
+                                  <span className="text-on-surface-variant">
                                     數量: {item.quantity}
                                   </span>
-                                  <span className="font-bold text-[#0050cc]">
+                                  <span className="font-bold text-secondary">
                                     NT$ {item.subtotal.toLocaleString()}
                                   </span>
                                 </div>
@@ -174,18 +177,18 @@ export default function OrderLookup() {
 
                         {/* 總金額 */}
                         <div className="flex justify-between items-center font-sans">
-                          <span className="text-sm font-bold text-[#44474f]">
+                          <span className="text-sm font-bold text-on-surface-variant">
                             總計
                           </span>
-                          <span className="text-lg font-black text-[#0050cc]">
+                          <span className="text-lg font-black text-secondary">
                             NT$ {order.total.toLocaleString()}
                           </span>
                         </div>
 
                         {/* 次要資訊：取貨方式與地點、備註 */}
-                        <div className="text-xs font-medium text-[#44474f] font-sans space-y-1 pt-1 border-t border-[#cfdaf1]/50">
+                        <div className="text-xs font-medium text-on-surface-variant font-sans space-y-1 pt-1 border-t border-surface-dim/50">
                           <p className="flex items-center space-x-1.5">
-                            <method.Icon className="w-3.5 h-3.5 text-[#0050cc] flex-shrink-0" />
+                            <method.Icon className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
                             <span>
                               {method.label}｜{order.location}
                             </span>

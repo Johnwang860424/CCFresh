@@ -266,29 +266,29 @@ export default function CheckoutForm({
   return (
     <div
       id="checkout-section"
-      className="bg-[#f0f3ff] py-16 px-4 sm:px-6 lg:px-8 border-t border-[#dee8ff]"
+      className="bg-surface-container-low py-16 px-4 sm:px-6 lg:px-8 border-t border-surface-container-high"
     >
       {pendingDuplicate && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00102d]/55 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-primary/55 px-4"
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="duplicate-order-title"
           aria-describedby="duplicate-order-message"
         >
-          <div className="w-full max-w-md rounded-2xl border border-[#cfdaf1] bg-white p-6 shadow-xl sm:p-8">
+          <div className="w-full max-w-md rounded-2xl border border-surface-dim bg-white p-6 shadow-xl sm:p-8">
             <div className="flex items-start gap-3">
-              <TriangleAlert className="mt-0.5 h-6 w-6 flex-shrink-0 text-[#ff900f]" />
+              <TriangleAlert className="mt-0.5 h-6 w-6 flex-shrink-0 text-amber-600" />
               <div className="space-y-2">
                 <h3
                   id="duplicate-order-title"
-                  className="text-lg font-black text-[#00102d]"
+                  className="text-lg font-black text-primary"
                 >
                   請確認訂單
                 </h3>
                 <p
                   id="duplicate-order-message"
-                  className="text-sm font-medium leading-6 text-[#44474f]"
+                  className="text-sm font-medium leading-6 text-on-surface-variant"
                 >
                   系統偵測到您可能已有訂單，請確認是否為重複下單
                 </p>
@@ -299,7 +299,7 @@ export default function CheckoutForm({
                 type="button"
                 disabled={submitting}
                 onClick={() => setPendingDuplicate(null)}
-                className="rounded-lg border border-[#0050cc] px-5 py-3 text-sm font-bold text-[#0050cc] transition-colors hover:bg-[#f0f3ff] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-secondary px-5 py-3 text-sm font-bold text-secondary transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60"
               >
                 返回確認
               </button>
@@ -307,7 +307,7 @@ export default function CheckoutForm({
                 type="button"
                 disabled={submitting}
                 onClick={() => void submitOrder(pendingDuplicate, true)}
-                className="rounded-lg bg-[#00102d] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0050cc] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "訂單送出中..." : "仍要送出"}
               </button>
@@ -316,44 +316,44 @@ export default function CheckoutForm({
         </div>
       )}
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl border border-[#dee8ff] p-6 sm:p-8 shadow-md">
+        <div className="bg-white rounded-2xl border border-surface-container-high p-6 sm:p-8 shadow-md">
           {/* Section Header */}
-          <div className="flex items-center space-x-3 pb-5 border-b border-[#e7eeff] mb-6">
-            <ShoppingCart className="w-6 h-6 text-[#0050cc]" />
-            <h2 className="text-xl sm:text-2xl font-black text-[#00102d] font-sans tracking-wide">
+          <div className="flex items-center space-x-3 pb-5 border-b border-surface-container mb-6">
+            <ShoppingCart className="w-6 h-6 text-secondary" />
+            <h2 className="text-xl sm:text-2xl font-black text-primary font-sans tracking-wide">
               結帳與收貨資訊
             </h2>
           </div>
 
           {/* Cart items list summary panel */}
-          <div className="mb-8 bg-[#f0f3ff] border border-[#cfdaf1] rounded-xl overflow-hidden shadow-inner">
+          <div className="mb-8 bg-surface-container-low border border-surface-dim rounded-xl overflow-hidden shadow-inner">
             <div className="p-4 sm:p-5 text-center flex flex-col space-y-3">
-              <span className="text-[#44474f] font-sans font-medium text-sm sm:text-base">
+              <span className="text-on-surface-variant font-sans font-medium text-sm sm:text-base">
                 購物車內目前有 {totalItems} 項商品
               </span>
 
               {/* Detailed items listed (collapsible or neat display) */}
               {totalItems > 0 && (
-                <div className="max-h-40 overflow-y-auto px-1 text-left space-y-2 border-y border-[#cfdaf1]/50 py-3 bg-white/40 rounded-lg">
+                <div className="max-h-40 overflow-y-auto px-1 text-left space-y-2 border-y border-surface-dim/50 py-3 bg-white/40 rounded-lg">
                   {cart.map((item) => (
                     <div
                       key={item.product.id}
-                      className="flex justify-between items-center text-xs font-sans text-[#111c2c] px-2 py-1 bg-white/60 rounded"
+                      className="flex justify-between items-center text-xs font-sans text-on-surface px-2 py-1 bg-white/60 rounded"
                     >
                       <span className="font-semibold">
                         {item.product.name}
                         {item.product.weight?.trim() && (
-                          <span className="font-normal text-[#44474f]">
+                          <span className="font-normal text-on-surface-variant">
                             {" "}
                             ({item.product.weight.split(" ")[0]})
                           </span>
                         )}
                       </span>
                       <div className="flex items-center space-x-3">
-                        <span className="text-[#44474f]">
+                        <span className="text-on-surface-variant">
                           數量: {item.quantity}
                         </span>
-                        <span className="font-bold text-[#0050cc]">
+                        <span className="font-bold text-secondary">
                           NT${" "}
                           {calcLineSubtotal(
                             item.product.promo,
@@ -365,7 +365,7 @@ export default function CheckoutForm({
                           type="button"
                           onClick={() => onRemoveItem(item.product.id)}
                           aria-label={`移除 ${item.product.name}`}
-                          className="p-1 text-[#ba1a1a] rounded transition-colors hover:bg-[#ffdad6] cursor-pointer active:scale-95"
+                          className="p-1 text-error rounded transition-colors hover:bg-error-container cursor-pointer active:scale-95"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -376,8 +376,8 @@ export default function CheckoutForm({
               )}
 
               <div className="flex justify-between items-center pt-2 px-1 font-sans">
-                <span className="text-sm font-bold text-[#44474f]">總計</span>
-                <span className="text-lg sm:text-2xl font-black text-[#0050cc]">
+                <span className="text-sm font-bold text-on-surface-variant">總計</span>
+                <span className="text-lg sm:text-2xl font-black text-secondary">
                   NT$ {totalPrice.toLocaleString()}
                 </span>
               </div>
@@ -386,7 +386,7 @@ export default function CheckoutForm({
 
           {/* Alert for empty cart submission attempt */}
           {errors.cart && (
-            <div className="mb-6 p-4 bg-[#ffdad6] text-[#ba1a1a] rounded-lg text-sm font-medium flex items-center space-x-2 border border-[#ffdad6]">
+            <div className="mb-6 p-4 bg-error-container text-error rounded-lg text-sm font-medium flex items-center space-x-2 border border-error-container">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{errors.cart}</span>
             </div>
@@ -397,27 +397,29 @@ export default function CheckoutForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 姓名 Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
-                  <User className="w-3.5 h-3.5 text-[#0050cc]" />
+                <label htmlFor="checkout-name" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                  <User className="w-3.5 h-3.5 text-secondary" />
                   <span>
-                    姓名 <span className="text-[#ba1a1a]">*</span>
+                    姓名 <span className="text-error">*</span>
                   </span>
                 </label>
                 <div className="relative">
                   <input
+                    id="checkout-name"
                     type="text"
                     name="name"
+                    autoComplete="name"
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="請輸入真實姓名"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.name
-                      ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                      : "border-[#cfdaf1] hover:border-[#485e8a]"
+                    className={`w-full px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-secondary ${errors.name
+                      ? "border-error focus:ring-error/40"
+                      : "border-surface-dim hover:border-surface-tint"
                       }`}
                   />
                 </div>
                 {errors.name && (
-                  <p className="text-xs font-bold text-[#ba1a1a]">
+                  <p className="text-xs font-bold text-error">
                     {errors.name}
                   </p>
                 )}
@@ -425,27 +427,30 @@ export default function CheckoutForm({
 
               {/* 聯絡電話 Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
-                  <Phone className="w-3.5 h-3.5 text-[#0050cc]" />
+                <label htmlFor="checkout-phone" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                  <Phone className="w-3.5 h-3.5 text-secondary" />
                   <span>
-                    聯絡電話 <span className="text-[#ba1a1a]">*</span>
+                    聯絡電話 <span className="text-error">*</span>
                   </span>
                 </label>
                 <div className="relative">
                   <input
-                    type="text"
+                    id="checkout-phone"
+                    type="tel"
+                    inputMode="numeric"
                     name="phone"
+                    autoComplete="tel"
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="09XXXXXXXX"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.phone
-                      ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                      : "border-[#cfdaf1] hover:border-[#485e8a]"
+                    className={`w-full px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-secondary ${errors.phone
+                      ? "border-error focus:ring-error/40"
+                      : "border-surface-dim hover:border-surface-tint"
                       }`}
                   />
                 </div>
                 {errors.phone && (
-                  <p className="text-xs font-bold text-[#ba1a1a]">
+                  <p className="text-xs font-bold text-error">
                     {errors.phone}
                   </p>
                 )}
@@ -454,10 +459,10 @@ export default function CheckoutForm({
 
             {/* 取貨方式 */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
-                <MapPin className="w-3.5 h-3.5 text-[#0050cc]" />
+              <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                <MapPin className="w-3.5 h-3.5 text-secondary" />
                 <span>
-                  取貨方式 <span className="text-[#ba1a1a]">*</span>
+                  取貨方式 <span className="text-error">*</span>
                 </span>
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -474,8 +479,8 @@ export default function CheckoutForm({
                       type="button"
                       onClick={() => handleMethodChange(value)}
                       className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border text-sm font-bold transition-all cursor-pointer active:scale-95 ${active
-                        ? "bg-[#00102d] text-white border-[#00102d] shadow-md"
-                        : "bg-[#f9f9ff] text-[#44474f] border-[#cfdaf1] hover:border-[#485e8a]"
+                        ? "bg-primary text-white border-primary shadow-md"
+                        : "bg-surface text-on-surface-variant border-surface-dim hover:border-surface-tint"
                         }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -489,15 +494,15 @@ export default function CheckoutForm({
             {formData.deliveryMethod === "pickup" ? (
               /* 指定地點自取：先選縣市，再選鄉鎮市區 */
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
-                  <MapPin className="w-3.5 h-3.5 text-[#0050cc]" />
+                <label htmlFor="checkout-city" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                  <MapPin className="w-3.5 h-3.5 text-secondary" />
                   <span>
-                    取貨地點 <span className="text-[#ba1a1a]">*</span>
+                    取貨地點 <span className="text-error">*</span>
                   </span>
                 </label>
 
                 {spotsError ? (
-                  <p className="text-xs font-bold text-[#ba1a1a]">
+                  <p className="text-xs font-bold text-error">
                     {spotsError}
                   </p>
                 ) : (
@@ -506,13 +511,14 @@ export default function CheckoutForm({
                     <div className="space-y-1.5">
                       <div className="relative">
                         <select
+                          id="checkout-city"
                           name="city"
                           value={formData.city}
                           onChange={handleCityChange}
                           disabled={spotsLoading}
-                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${errors.city
-                            ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                            : "border-[#cfdaf1] hover:border-[#485e8a]"
+                          className={`w-full px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-secondary disabled:opacity-60 disabled:cursor-not-allowed ${errors.city
+                            ? "border-error focus:ring-error/40"
+                            : "border-surface-dim hover:border-surface-tint"
                             }`}
                         >
                           <option value="">
@@ -524,7 +530,7 @@ export default function CheckoutForm({
                             </option>
                           ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#44474f]">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-on-surface-variant">
                           <svg
                             className="fill-current h-4 w-4"
                             xmlns="http://www.w3.org/2000/svg"
@@ -535,7 +541,7 @@ export default function CheckoutForm({
                         </div>
                       </div>
                       {errors.city && (
-                        <p className="text-xs font-bold text-[#ba1a1a]">
+                        <p className="text-xs font-bold text-error">
                           {errors.city}
                         </p>
                       )}
@@ -545,13 +551,14 @@ export default function CheckoutForm({
                     <div className="space-y-1.5">
                       <div className="relative">
                         <select
+                          aria-label="取貨地點（鄉鎮市區）"
                           name="township"
                           value={formData.township}
                           onChange={handleInputChange}
                           disabled={!formData.city}
-                          className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] disabled:opacity-60 disabled:cursor-not-allowed ${errors.township
-                            ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                            : "border-[#cfdaf1] hover:border-[#485e8a]"
+                          className={`w-full px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface appearance-none transition-colors focus:outline-none focus:ring-2 focus:ring-secondary disabled:opacity-60 disabled:cursor-not-allowed ${errors.township
+                            ? "border-error focus:ring-error/40"
+                            : "border-surface-dim hover:border-surface-tint"
                             }`}
                         >
                           <option value="">
@@ -563,7 +570,7 @@ export default function CheckoutForm({
                             </option>
                           ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#44474f]">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-on-surface-variant">
                           <svg
                             className="fill-current h-4 w-4"
                             xmlns="http://www.w3.org/2000/svg"
@@ -574,7 +581,7 @@ export default function CheckoutForm({
                         </div>
                       </div>
                       {errors.township && (
-                        <p className="text-xs font-bold text-[#ba1a1a]">
+                        <p className="text-xs font-bold text-error">
                           {errors.township}
                         </p>
                       )}
@@ -586,55 +593,65 @@ export default function CheckoutForm({
               /* 宅配到府：自行填寫收件地址 */
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
-                    <Home className="w-3.5 h-3.5 text-[#0050cc]" />
+                  <label htmlFor="checkout-address" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                    <Home className="w-3.5 h-3.5 text-secondary" />
                     <span>
-                      收件地址 <span className="text-[#ba1a1a]">*</span>
+                      收件地址 <span className="text-error">*</span>
                     </span>
                   </label>
                   <input
+                    id="checkout-address"
                     type="text"
                     name="address"
+                    autoComplete="street-address"
                     value={formData.address}
                     onChange={handleInputChange}
                     placeholder="請輸入完整收件地址"
-                    className={`w-full px-4 py-3 bg-[#f9f9ff] border rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] ${errors.address
-                      ? "border-[#ba1a1a] focus:ring-[#ba1a1a]/40"
-                      : "border-[#cfdaf1] hover:border-[#485e8a]"
+                    className={`w-full px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-secondary ${errors.address
+                      ? "border-error focus:ring-error/40"
+                      : "border-surface-dim hover:border-surface-tint"
                       }`}
                   />
                   {errors.address && (
-                    <p className="text-xs font-bold text-[#ba1a1a]">
+                    <p className="text-xs font-bold text-error">
                       {errors.address}
                     </p>
                   )}
+                </div>
+
+                {/* 運費在下單前先揭露，與訂單成功彈窗的運費資訊一致 */}
+                <div className="p-3 bg-surface-container-low border border-surface-dim rounded-lg text-xs font-medium text-on-surface-variant space-y-1">
+                  <p className="font-bold text-primary">運費另計</p>
+                  <p>711店到店（10公斤）NT$ 150；宅配（20公斤）NT$ 250</p>
+                  <p>下單後由客服與您確認運費並提供匯款帳號。</p>
                 </div>
               </div>
             )}
 
             {/* 備註 Textarea */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#00102d] uppercase tracking-wider flex items-center space-x-1">
-                <FileText className="w-3.5 h-3.5 text-[#0050cc]" />
+              <label htmlFor="checkout-remarks" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">
+                <FileText className="w-3.5 h-3.5 text-secondary" />
                 <span>備註</span>
               </label>
               <textarea
+                id="checkout-remarks"
                 name="remarks"
                 value={formData.remarks}
                 onChange={handleInputChange}
                 rows={3}
                 maxLength={100}
                 placeholder="有任何特殊需求請在此填寫..."
-                className="w-full px-4 py-3 bg-[#f9f9ff] border border-[#cfdaf1] hover:border-[#485e8a] rounded-lg text-sm font-medium text-[#111c2c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0050cc] resize-none"
+                className="w-full px-4 py-3 bg-surface border border-surface-dim hover:border-surface-tint rounded-lg text-sm font-medium text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-secondary resize-none"
               />
-              <p className="text-right text-xs font-medium text-[#44474f]">
+              <p className="text-right text-xs font-medium text-on-surface-variant">
                 {formData.remarks.length}/100
               </p>
             </div>
 
             {/* Alert for submission failure */}
             {errors.submit && (
-              <div className="p-4 bg-[#ffdad6] text-[#ba1a1a] rounded-lg text-sm font-medium flex items-center space-x-2 border border-[#ffdad6]">
+              <div className="p-4 bg-error-container text-error rounded-lg text-sm font-medium flex items-center space-x-2 border border-error-container">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <span>{errors.submit}</span>
               </div>
@@ -645,7 +662,7 @@ export default function CheckoutForm({
               <button
                 type="submit"
                 disabled={submitting || pendingDuplicate !== null}
-                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-[#00102d] hover:bg-[#0050cc] text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-primary hover:bg-secondary text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="w-4 h-4 rotate-45" />
                 <span>{submitting ? "訂單送出中..." : "送出訂單"}</span>

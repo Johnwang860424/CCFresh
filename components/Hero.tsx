@@ -15,14 +15,14 @@ export default function Hero({ onCtaClick }: HeroProps) {
       <div className="absolute inset-0 z-0">
         <Image
           src="/background.webp"
-          alt="Premium raw fresh seafood on ice"
+          alt="鋪在碎冰上的新鮮海產"
           fill
           priority
           sizes="100vw"
-          className="object-cover scale-105 filter brightness-75 contrast-105 scale-image"
+          className="object-cover scale-105 filter brightness-75 contrast-105"
         />
         {/* Dark Icy Gradient Overlay to ensure maximum text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#00102d]/50 via-[#00102d]/75 to-[#00102d]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/50 via-primary/75 to-primary" />
       </div>
 
       {/* Decorative Frost Elements */}
@@ -38,10 +38,10 @@ export default function Hero({ onCtaClick }: HeroProps) {
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-6 inline-flex items-center space-x-2 bg-[#0266ff]/25 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#0266ff]/35"
+          className="mb-6 inline-flex items-center space-x-2 bg-secondary-bright/25 backdrop-blur-md px-4 py-1.5 rounded-full border border-secondary-bright/35"
         >
-          <span className="w-2 h-2 rounded-full bg-[#0266ff] animate-ping" />
-          <span className="text-[#dee8ff] text-xs font-semibold tracking-wider font-sans">
+          <span className="w-2 h-2 rounded-full bg-secondary-bright animate-ping motion-reduce:animate-none" />
+          <span className="text-surface-container-high text-xs font-semibold tracking-wider font-sans">
             急凍真鮮 · 日日直送
           </span>
         </motion.div>
@@ -61,7 +61,7 @@ export default function Hero({ onCtaClick }: HeroProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="mt-4 sm:mt-6 text-base sm:text-xl text-[#cfdaf1] font-medium font-sans max-w-xl text-center leading-relaxed tracking-wider drop-shadow"
+          className="mt-4 sm:mt-6 text-base sm:text-xl text-surface-dim font-medium font-sans max-w-xl text-center leading-relaxed tracking-wider drop-shadow"
         >
           專業低溫宅配，鎖住最初的鮮甜
         </motion.p>
@@ -72,19 +72,19 @@ export default function Hero({ onCtaClick }: HeroProps) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.5 }}
           onClick={onCtaClick}
-          className="mt-10 px-8 py-3.5 bg-[#0050cc] hover:bg-[#0266ff] text-white text-base font-bold rounded-full transition-all duration-300 shadow-xl shadow-[#00102d]/50 hover:shadow-[#0050cc]/30 hover:scale-[1.04] focus:ring-4 focus:ring-[#0050cc]/40 cursor-pointer flex items-center space-x-2.5 active:scale-95"
+          className="mt-10 px-8 py-3.5 bg-secondary hover:bg-secondary-bright text-white text-base font-bold rounded-full transition-all duration-300 shadow-xl hover:scale-[1.04] focus:ring-4 focus:ring-secondary/40 cursor-pointer flex items-center space-x-2.5 active:scale-95"
         >
           <span>立即選購</span>
-          <ArrowDown className="w-4 h-4 animate-bounce" />
+          <ArrowDown className="w-4 h-4 animate-bounce motion-reduce:animate-none" />
         </motion.button>
       </div>
 
       {/* Floating hints about Cold Chain safety */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center">
-        <span className="text-xs text-[#cfdaf1]/75 font-sans tracking-widest font-medium mb-1">
-          SCROLL DOWN
+        <span className="text-xs text-surface-dim/75 font-sans tracking-widest font-medium mb-1">
+          往下滑動選購
         </span>
-        <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#cfdaf1] to-transparent animate-pulse" />
+        <div className="w-1 h-8 rounded-full bg-gradient-to-b from-surface-dim to-transparent animate-pulse motion-reduce:animate-none" />
       </div>
     </div>
   );
