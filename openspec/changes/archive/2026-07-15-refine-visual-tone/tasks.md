@@ -27,4 +27,4 @@
 ## 5. 驗證
 
 - [x] 5.1 `npm run check` 與 `npm run build` 全數通過
-- [ ] 5.2 起 dev server 目視驗收：商品區淺色、卡片層次與 2 行截斷、促銷徽章 promo 橘、lightbox、全頁無深色殘留與對比不足
+- [x] 5.2 起 dev server 目視驗收：商品區淺色、卡片層次與 2 行截斷、促銷徽章 promo 橘、lightbox、全頁無深色殘留與對比不足
