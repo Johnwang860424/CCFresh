@@ -20,11 +20,11 @@
 ## ADDED Requirements
 
 ### Requirement: 字重與字級收斂
-全站 SHALL 不使用 `font-black`：大標題用 `font-bold`、小標題與強調用 `font-semibold`；商品卡上價格維持唯一 bold。全站最小字級 SHALL 為 `text-xs`（12px），不得出現 12px 以下的自訂字級。
+全站 SHALL 不使用 `font-black`（唯一例外：Hero 主標題保留 `font-black` 維持視覺衝擊力）：大標題用 `font-bold`、小標題與強調用 `font-semibold`；商品卡上價格維持唯一 bold。全站最小字級 SHALL 為 `text-xs`（12px），不得出現 12px 以下的自訂字級。
 
 #### Scenario: 無 font-black 與過小字級
 - **WHEN** 掃描 `components/` 與 `app/` 的 class
-- **THEN** 無 `font-black`，無 `text-[9px]`/`text-[10px]`/`text-[11px]`
+- **THEN** `font-black` 僅出現於 Hero 主標題一處，無 `text-[9px]`/`text-[10px]`/`text-[11px]`
 
 ### Requirement: success 與 warning 語意色 token
 成功與警示狀態的色彩 SHALL 引用 `app/globals.css` 定義的語意 token（success / success-container / on-success-container / warning / warning-container / on-warning-container，值回寫 `DESIGN.md`），不得使用 Tailwind 內建 amber/green/emerald 色階。

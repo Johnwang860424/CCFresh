@@ -278,11 +278,11 @@ export default function CheckoutForm({
         >
           <div className="w-full max-w-md rounded-2xl border border-surface-dim bg-white p-6 shadow-xl sm:p-8">
             <div className="flex items-start gap-3">
-              <TriangleAlert className="mt-0.5 h-6 w-6 flex-shrink-0 text-amber-600" />
+              <TriangleAlert className="mt-0.5 h-6 w-6 flex-shrink-0 text-warning" />
               <div className="space-y-2">
                 <h3
                   id="duplicate-order-title"
-                  className="text-lg font-black text-primary"
+                  className="text-lg font-bold text-primary"
                 >
                   請確認訂單
                 </h3>
@@ -307,7 +307,7 @@ export default function CheckoutForm({
                 type="button"
                 disabled={submitting}
                 onClick={() => void submitOrder(pendingDuplicate, true)}
-                className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-secondary px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-secondary-bright disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "訂單送出中..." : "仍要送出"}
               </button>
@@ -320,7 +320,7 @@ export default function CheckoutForm({
           {/* Section Header */}
           <div className="flex items-center space-x-3 pb-5 border-b border-surface-container mb-6">
             <ShoppingCart className="w-6 h-6 text-secondary" />
-            <h2 className="text-xl sm:text-2xl font-black text-primary font-sans tracking-wide">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary font-sans tracking-wide">
               結帳與收貨資訊
             </h2>
           </div>
@@ -377,7 +377,7 @@ export default function CheckoutForm({
 
               <div className="flex justify-between items-center pt-2 px-1 font-sans">
                 <span className="text-sm font-bold text-on-surface-variant">總計</span>
-                <span className="text-lg sm:text-2xl font-black text-secondary">
+                <span className="text-lg sm:text-2xl font-bold text-secondary">
                   NT$ {totalPrice.toLocaleString()}
                 </span>
               </div>
@@ -662,7 +662,7 @@ export default function CheckoutForm({
               <button
                 type="submit"
                 disabled={submitting || pendingDuplicate !== null}
-                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-primary hover:bg-secondary text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-secondary hover:bg-secondary-bright text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="w-4 h-4 rotate-45" />
                 <span>{submitting ? "訂單送出中..." : "送出訂單"}</span>

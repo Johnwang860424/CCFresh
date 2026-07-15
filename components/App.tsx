@@ -127,7 +127,7 @@ export default function App() {
       <button
         key={label}
         onClick={() => setColumns(value)}
-        className={`py-1 px-3 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 ${
+        className={`py-1 px-3 rounded-lg text-xs font-semibold transition-all duration-300 font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 ${
           isActive(columns)
             ? "bg-secondary text-white"
             : "text-on-surface-variant hover:text-primary"
@@ -243,7 +243,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Section Section Header Title */}
           <div className="text-center mb-16 space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black font-sans tracking-wide text-primary">
+            <h2 className="text-3xl sm:text-4xl font-bold font-sans tracking-wide text-primary">
               精選商品
             </h2>
 
@@ -273,7 +273,7 @@ export default function App() {
                     <button
                       key={tab.key}
                       onClick={() => setSelectedCategory(tab.key)}
-                      className={`py-1.5 px-3.5 rounded-lg text-xs font-black transition-all duration-300 font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 ${
+                      className={`py-1.5 px-3.5 rounded-lg text-xs font-semibold transition-all duration-300 font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 ${
                         isScrollable
                           ? "flex-none snap-start whitespace-nowrap"
                           : "flex-1"
@@ -343,7 +343,7 @@ export default function App() {
               <div className="w-12 h-12 bg-surface-container-low rounded-full flex items-center justify-center text-secondary mb-1">
                 <Icon className="w-6 h-6" />
               </div>
-              <h3 className="text-primary text-sm font-black font-sans">
+              <h3 className="text-primary text-sm font-semibold font-sans">
                 {text}
               </h3>
             </div>
@@ -362,9 +362,9 @@ export default function App() {
       <OrderLookup />
 
       {/* Elegant minimalist footer */}
-      <footer className="bg-primary text-white/50 text-[11px] py-10 text-center border-t border-white/10 font-medium font-sans">
+      <footer className="bg-primary text-white/50 text-xs py-10 text-center border-t border-white/10 font-medium font-sans">
         <div className="max-w-7xl mx-auto px-4 space-y-3">
-          <p className="text-white/85 text-sm font-black font-sans">
+          <p className="text-white/85 text-sm font-semibold font-sans">
             CC 生鮮 - 嚴選產地，鎖住甘甜
           </p>
           <p className="max-w-md mx-auto leading-relaxed">
@@ -386,7 +386,7 @@ export default function App() {
                 <ShoppingCart className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-black text-primary">
+                <h4 className="text-sm font-semibold text-primary">
                   已選購 {totalCartCount} 項商品
                 </h4>
                 <p className="text-xs text-on-surface-variant">

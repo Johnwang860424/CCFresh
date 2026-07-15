@@ -69,10 +69,10 @@ export default function PwaInstallPrompt() {
         </motion.div>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-black text-white font-sans leading-snug">
+        <p className="text-sm font-semibold text-white font-sans leading-snug">
           CC 生鮮加入手機桌面，下次下單更快速！
         </p>
-        <p className="text-[10px] text-white/70 font-medium font-sans mt-0.5">
+        <p className="text-xs text-white/70 font-medium font-sans mt-0.5">
           不用下載 APP，一鍵開啟直接下單
         </p>
       </div>

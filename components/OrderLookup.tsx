@@ -77,7 +77,7 @@ export default function OrderLookup() {
           {/* Section Header */}
           <div className="flex items-center space-x-3 pb-5 border-b border-surface-container mb-6">
             <Search className="w-6 h-6 text-secondary" />
-            <h2 className="text-xl sm:text-2xl font-black text-primary font-sans tracking-wide">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary font-sans tracking-wide">
               查詢訂單
             </h2>
           </div>
@@ -105,7 +105,7 @@ export default function OrderLookup() {
               <button
                 type="submit"
                 disabled={searching}
-                className="px-8 py-3 bg-primary hover:bg-secondary text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-8 py-3 bg-secondary hover:bg-secondary-bright text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Search className="w-4 h-4" />
                 <span>{searching ? "查詢中..." : "查詢"}</span>
@@ -142,7 +142,7 @@ export default function OrderLookup() {
                       >
                         {/* 主要資訊：編號 + 姓名 */}
                         <div className="flex justify-between items-baseline gap-3">
-                          <span className="text-base font-black text-primary font-sans">
+                          <span className="text-base font-semibold text-primary font-sans">
                             取貨號碼牌 {order.pickupCode}
                           </span>
                           <span className="text-xs font-medium text-on-surface-variant">
@@ -180,7 +180,7 @@ export default function OrderLookup() {
                           <span className="text-sm font-bold text-on-surface-variant">
                             總計
                           </span>
-                          <span className="text-lg font-black text-secondary">
+                          <span className="text-lg font-bold text-secondary">
                             NT$ {order.total.toLocaleString()}
                           </span>
                         </div>

@@ -79,7 +79,7 @@ export default function ProductCard({
     if (!product.badge) return null;
 
     return (
-      <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center space-x-1 shadow-md bg-promo text-white">
+      <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold tracking-wider flex items-center space-x-1 shadow-md bg-promo text-white">
         <TrendingDown className="w-3.5 h-3.5" />
         <span>{product.badge}</span>
       </div>
@@ -89,7 +89,7 @@ export default function ProductCard({
   return (
     // 已加入購物車的卡片以品牌藍外框標示選取狀態
     <div
-      className={`w-full h-full bg-white rounded-xl border overflow-hidden shadow-sm hover:shadow-[0_4px_20px_rgba(10,37,78,0.1)] transition-all duration-300 flex flex-col group relative ${
+      className={`w-full h-full bg-white even:bg-surface-container-low rounded-xl border overflow-hidden shadow-sm hover:shadow-[0_4px_20px_rgba(10,37,78,0.1)] transition-all duration-300 flex flex-col group relative ${
         quantity > 0
           ? "border-secondary ring-1 ring-secondary"
           : "border-surface-container-high"
@@ -114,7 +114,7 @@ export default function ProductCard({
         {/* 售完遮罩：使用冰霜毛玻璃質感，並讓內部的「售完」徽章有精緻感 */}
         {isSoldOut && (
           <div className="absolute inset-0 z-10 bg-white/30 backdrop-blur-[3px] border border-white/10 flex items-center justify-center pointer-events-none">
-            <span className="px-5 py-2 rounded-full bg-primary/90 text-white text-xs font-black tracking-[0.2em] shadow-lg border border-white/20">
+            <span className="px-5 py-2 rounded-full bg-primary/90 text-white text-xs font-semibold tracking-[0.2em] shadow-lg border border-white/20">
               售完
             </span>
           </div>
@@ -224,7 +224,6 @@ export default function ProductCard({
         {/* flex-wrap：卡片夠寬時價格與按鈕同列，太窄時按鈕整顆掉到下一行，價格永不換行 */}
         <div className="mt-auto flex flex-wrap items-center justify-between pt-2 border-t border-surface-container-low gap-2">
           <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-            <span className="text-xs text-on-surface-variant">會員價</span>
             <span className="text-xl font-bold text-secondary font-sans">
               NT$ {product.price.toLocaleString()}
             </span>
@@ -245,7 +244,7 @@ export default function ProductCard({
                   className={`w-full h-9 rounded-full text-xs font-bold leading-none transition-all duration-200 flex items-center justify-center space-x-1 shadow-sm py-2.5 px-3 ${
                     isSoldOut
                       ? "bg-surface-container-low text-on-surface-variant border border-surface-container-high cursor-not-allowed"
-                      : "bg-secondary text-white hover:bg-secondary-bright cursor-pointer active:scale-95"
+                      : "bg-promo text-white hover:bg-promo-bright cursor-pointer active:scale-95"
                   }`}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
@@ -394,15 +393,15 @@ export default function ProductCard({
 
               {/* Info panel below the lightbox */}
               <div className="mt-4 px-6 py-3 bg-primary/80 backdrop-blur-sm rounded-xl border border-white/10 text-center max-w-md pointer-events-auto shadow-xl flex flex-col items-center">
-                <p className="text-white text-sm font-black tracking-wide font-sans">
+                <p className="text-white text-sm font-semibold tracking-wide font-sans">
                   {product.name}
                 </p>
                 {product.weight && (
-                  <p className="text-[11px] text-surface-dim font-semibold font-sans mt-1">
+                  <p className="text-xs text-surface-dim font-semibold font-sans mt-1">
                     {product.weight}
                   </p>
                 )}
-                <p className="text-xs text-white font-black font-sans mt-1">
+                <p className="text-xs text-white font-bold font-sans mt-1">
                   NT$ {product.price.toLocaleString()}
                 </p>
               </div>
