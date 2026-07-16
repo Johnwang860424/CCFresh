@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Minus, TrendingDown, ShoppingCart, X, ZoomIn, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product, CartItem } from "../types";
+import { resolveSwipe } from "../app/lib/swipe";
+import { useFocusTrap } from "../app/lib/useFocusTrap";
 
 interface ProductCardProps {
   product: Product;
@@ -27,6 +29,17 @@ export default function ProductCard({
   const [isLargeImageLoading, setIsLargeImageLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoomedImageIndex, setZoomedImageIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const lightboxRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(lightboxRef, isZoomed);
+
+  // 卡片輪播換圖（與箭頭鈕同邏輯，供觸控滑動共用）
+  const stepCardImage = (delta: 1 | -1) => {
+    setCurrentImageIndex(
+      (prev) =>
+        (prev + delta + product.images.length) % product.images.length,
+    );
+  };
 
   // 換圖時開 loading spinner 由各事件處理器負責：同一張圖 src 不變、
   // onLoad 不會再觸發，所以只有真的換圖才能重置 spinner，否則會卡住。
@@ -108,6 +121,18 @@ export default function ProductCard({
           }
         }}
         aria-label={`放大查看 ${product.name} 圖片`}
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (product.images.length <= 1) return;
+          const dir = resolveSwipe(
+            touchStartX.current,
+            e.changedTouches[0].clientX,
+          );
+          if (dir === "left") stepCardImage(1);
+          else if (dir === "right") stepCardImage(-1);
+        }}
       >
         {renderBadge()}
 
@@ -296,7 +321,13 @@ export default function ProductCard({
       {/* Lightbox / Image Zoom Overlay */}
       <AnimatePresence>
         {isZoomed && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            ref={lightboxRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${product.name} 圖片放大檢視`}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
             {/* Backdrop overlay with blur */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -315,7 +346,21 @@ export default function ProductCard({
               className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center z-10 pointer-events-none"
             >
               {/* Image Frame */}
-              <div className="relative w-full h-[55vh] sm:h-[65vh] pointer-events-auto rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-primary/60 flex items-center justify-center">
+              <div
+                className="relative w-full h-[55vh] sm:h-[65vh] pointer-events-auto rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-primary/60 flex items-center justify-center"
+                onTouchStart={(e) => {
+                  touchStartX.current = e.touches[0].clientX;
+                }}
+                onTouchEnd={(e) => {
+                  if (product.images.length <= 1) return;
+                  const dir = resolveSwipe(
+                    touchStartX.current,
+                    e.changedTouches[0].clientX,
+                  );
+                  if (dir === "left") stepZoomedImage(1);
+                  else if (dir === "right") stepZoomedImage(-1);
+                }}
+              >
                 {isLargeImageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-primary/30 backdrop-blur-sm z-10">
                     <Loader2 className="w-10 h-10 text-white/80 animate-spin" />
