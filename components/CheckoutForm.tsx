@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, ChangeEvent, SubmitEvent } from "react";
+import { useState, useMemo, useEffect, useRef, ChangeEvent, SubmitEvent } from "react";
 import {
   Send,
   MapPin,
@@ -14,6 +14,8 @@ import {
   Truck,
   Home,
   TriangleAlert,
+  Minus,
+  Plus,
 } from "lucide-react";
 import {
   CartItem,
@@ -35,6 +37,7 @@ import {
 } from "../app/lib/order-info-storage";
 import { useResource } from "../app/lib/useResource";
 import { isDuplicateOrderResponse } from "../app/domain/duplicate-order";
+import { useFocusTrap } from "../app/lib/useFocusTrap";
 
 interface CheckoutFormProps {
   cart: CartItem[];
@@ -43,6 +46,7 @@ interface CheckoutFormProps {
     confirmation: OrderConfirmation,
   ) => void;
   onRemoveItem: (productId: string) => void;
+  onChangeQuantity: (productId: string, delta: number) => void;
 }
 
 interface SubmissionSnapshot {
@@ -55,6 +59,7 @@ export default function CheckoutForm({
   cart,
   onSubmitOrder,
   onRemoveItem,
+  onChangeQuantity,
 }: CheckoutFormProps) {
   // location 為送出時才組出的顯示字串，不放進輸入狀態。
   const [formData, setFormData] = useState<Omit<OrderFormData, "location">>({
@@ -71,6 +76,18 @@ export default function CheckoutForm({
   const [submitting, setSubmitting] = useState(false);
   const [pendingDuplicate, setPendingDuplicate] =
     useState<SubmissionSnapshot | null>(null);
+  const duplicateDialogRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(duplicateDialogRef, pendingDuplicate !== null);
+
+  // Esc 關閉確認彈窗（送出中不可關，與「返回確認」按鈕的 disabled 一致）
+  useEffect(() => {
+    if (!pendingDuplicate) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !submitting) setPendingDuplicate(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [pendingDuplicate, submitting]);
 
   // 帶入上次下單資料。須在掛載後才讀 localStorage，否則 SSR 首屏與 client 會 hydration 不一致。
   useEffect(() => {
@@ -270,6 +287,7 @@ export default function CheckoutForm({
     >
       {pendingDuplicate && (
         <div
+          ref={duplicateDialogRef}
           className="fixed inset-0 z-50 flex items-center justify-center bg-primary/55 px-4"
           role="alertdialog"
           aria-modal="true"
@@ -278,11 +296,11 @@ export default function CheckoutForm({
         >
           <div className="w-full max-w-md rounded-2xl border border-surface-dim bg-white p-6 shadow-xl sm:p-8">
             <div className="flex items-start gap-3">
-              <TriangleAlert className="mt-0.5 h-6 w-6 flex-shrink-0 text-amber-600" />
+              <TriangleAlert className="mt-0.5 h-6 w-6 flex-shrink-0 text-warning" />
               <div className="space-y-2">
                 <h3
                   id="duplicate-order-title"
-                  className="text-lg font-black text-primary"
+                  className="text-lg font-bold text-primary"
                 >
                   請確認訂單
                 </h3>
@@ -307,7 +325,7 @@ export default function CheckoutForm({
                 type="button"
                 disabled={submitting}
                 onClick={() => void submitOrder(pendingDuplicate, true)}
-                className="rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-secondary px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-secondary-bright disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "訂單送出中..." : "仍要送出"}
               </button>
@@ -320,7 +338,7 @@ export default function CheckoutForm({
           {/* Section Header */}
           <div className="flex items-center space-x-3 pb-5 border-b border-surface-container mb-6">
             <ShoppingCart className="w-6 h-6 text-secondary" />
-            <h2 className="text-xl sm:text-2xl font-black text-primary font-sans tracking-wide">
+            <h2 className="text-xl sm:text-2xl font-bold text-primary font-sans tracking-wide">
               結帳與收貨資訊
             </h2>
           </div>
@@ -350,9 +368,31 @@ export default function CheckoutForm({
                         )}
                       </span>
                       <div className="flex items-center space-x-3">
-                        <span className="text-on-surface-variant">
-                          數量: {item.quantity}
-                        </span>
+                        <div className="flex items-center space-x-1.5">
+                          <button
+                            type="button"
+                            onClick={() => onChangeQuantity(item.product.id, -1)}
+                            aria-label={`減少 ${item.product.name} 數量`}
+                            className="w-6 h-6 bg-white hover:bg-surface-container-high text-primary rounded-full flex items-center justify-center border border-surface-container-low cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary active:scale-95"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="min-w-6 text-center font-semibold text-on-surface tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onChangeQuantity(item.product.id, 1)}
+                            disabled={
+                              item.product.stock !== null &&
+                              item.quantity >= item.product.stock
+                            }
+                            aria-label={`增加 ${item.product.name} 數量`}
+                            className="w-6 h-6 bg-secondary hover:bg-secondary-bright text-white rounded-full flex items-center justify-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
                         <span className="font-bold text-secondary">
                           NT${" "}
                           {calcLineSubtotal(
@@ -377,7 +417,7 @@ export default function CheckoutForm({
 
               <div className="flex justify-between items-center pt-2 px-1 font-sans">
                 <span className="text-sm font-bold text-on-surface-variant">總計</span>
-                <span className="text-lg sm:text-2xl font-black text-secondary">
+                <span className="text-lg sm:text-2xl font-bold text-secondary">
                   NT$ {totalPrice.toLocaleString()}
                 </span>
               </div>
@@ -662,7 +702,7 @@ export default function CheckoutForm({
               <button
                 type="submit"
                 disabled={submitting || pendingDuplicate !== null}
-                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-primary hover:bg-secondary text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full sm:w-auto min-w-[240px] px-8 py-3.5 bg-secondary hover:bg-secondary-bright text-white text-base font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2.5 cursor-pointer active:scale-95 hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="w-4 h-4 rotate-45" />
                 <span>{submitting ? "訂單送出中..." : "送出訂單"}</span>

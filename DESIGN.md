@@ -49,6 +49,13 @@ colors:
   on-background: '#111c2c'
   surface-variant: '#d8e3fa'
   promo: '#c2571b'
+  promo-bright: '#d96a2b'
+  success: '#1e7a46'
+  success-container: '#d7f0e0'
+  on-success-container: '#0a4326'
+  warning: '#9a6200'
+  warning-container: '#ffefd0'
+  on-warning-container: '#5c3a00'
 typography:
   display-lg:
     fontFamily: Noto Sans TC
@@ -123,7 +130,9 @@ The palette is anchored by the deep navy blue derived from the core brand mark, 
 - **Secondary (Ice Blue):** A brighter blue used for primary Call-to-Actions (CTAs) and interactive states to keep the UI feeling "fresh" rather than overly heavy.
 - **Surface/Tertiary:** A very light cool-grey used for section backgrounds to provide soft contrast against white cards.
 - **Semantic Palette:** High-visibility tones for status feedback. Success (Green) indicates stock availability and order completion; Warning (Amber) for low stock; Error (Red) for payment or form issues.
-- **Promo (Muted Warm Orange, `#c2571b`):** Reserved exclusively for promotion signals — the discount badge on product cards and lightbox accents. Never used for CTAs or interactive states; those stay in the blue family.
+- **Promo (Muted Warm Orange, `#c2571b`):** Promotion signals plus the add-to-cart action — the discount badge on product cards, lightbox accents, and the「加入購物車」button (hover: `promo-bright` `#d96a2b`). Not used for any other CTAs or interactive states; those stay in the blue family.
+- **Success / Warning semantics:** Status colors come from the `success` / `warning` token families above (Material-style: base / container / on-container). Never use Tailwind built-in amber/green/emerald scales in components.
+- **Font weight rule:** `font-black` is banned site-wide with one exception — the Hero main headline. Large headings use `font-bold`, sub-headings and emphasis use `font-semibold`; the product-card price stays the card's only bold element. Minimum font size is `text-xs` (12px).
 
 ## Typography
 

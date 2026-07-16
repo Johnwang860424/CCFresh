@@ -61,7 +61,7 @@ export default function Navbar({
               priority
             />
             <div className="flex flex-col">
-              <span className="text-xl font-black text-primary tracking-wide font-sans">
+              <span className="text-xl font-bold text-primary tracking-wide font-sans">
                 CC 生鮮
               </span>
             </div>
@@ -107,7 +107,7 @@ export default function Navbar({
             >
               <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-error text-white text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center shadow-md border border-white">
+                <span className="absolute -top-1 -right-1 bg-error text-white text-xs font-semibold rounded-full h-5 w-5 flex items-center justify-center shadow-md border border-white">
                   {totalItems}
                 </span>
               )}

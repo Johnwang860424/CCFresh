@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { motion } from "motion/react";
@@ -10,6 +10,7 @@ import {
   isStandaloneDisplay,
   PwaPlatform,
 } from "../app/lib/pwa";
+import { useFocusTrap } from "../app/lib/useFocusTrap";
 
 const emptySubscribe = () => () => {};
 
@@ -31,6 +32,8 @@ export default function PwaInstallPrompt() {
     () => null,
   );
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const tutorialRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(tutorialRef, isTutorialOpen);
 
   // 教學圖開啟時鎖住背景捲動、支援 Escape 關閉（與 ProductCard lightbox 行為一致）
   useEffect(() => {
@@ -69,10 +72,10 @@ export default function PwaInstallPrompt() {
         </motion.div>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-black text-white font-sans leading-snug">
+        <p className="text-sm font-semibold text-white font-sans leading-snug">
           CC 生鮮加入手機桌面，下次下單更快速！
         </p>
-        <p className="text-[10px] text-white/70 font-medium font-sans mt-0.5">
+        <p className="text-xs text-white/70 font-medium font-sans mt-0.5">
           不用下載 APP，一鍵開啟直接下單
         </p>
       </div>
@@ -87,7 +90,13 @@ export default function PwaInstallPrompt() {
         // 訂單彈窗本體帶 scale transform，會成為 fixed 子元素的 containing
         // block，portal 到 body 才能真正覆蓋全螢幕
         createPortal(
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-2">
+          <div
+            ref={tutorialRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="加入手機桌面教學"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-2"
+          >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Minus, TrendingDown, ShoppingCart, X, ZoomIn, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product, CartItem } from "../types";
+import { resolveSwipe } from "../app/lib/swipe";
+import { useFocusTrap } from "../app/lib/useFocusTrap";
 
 interface ProductCardProps {
   product: Product;
@@ -27,6 +29,17 @@ export default function ProductCard({
   const [isLargeImageLoading, setIsLargeImageLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoomedImageIndex, setZoomedImageIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const lightboxRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(lightboxRef, isZoomed);
+
+  // 卡片輪播換圖（與箭頭鈕同邏輯，供觸控滑動共用）
+  const stepCardImage = (delta: 1 | -1) => {
+    setCurrentImageIndex(
+      (prev) =>
+        (prev + delta + product.images.length) % product.images.length,
+    );
+  };
 
   // 換圖時開 loading spinner 由各事件處理器負責：同一張圖 src 不變、
   // onLoad 不會再觸發，所以只有真的換圖才能重置 spinner，否則會卡住。
@@ -79,7 +92,7 @@ export default function ProductCard({
     if (!product.badge) return null;
 
     return (
-      <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center space-x-1 shadow-md bg-promo text-white">
+      <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold tracking-wider flex items-center space-x-1 shadow-md bg-promo text-white">
         <TrendingDown className="w-3.5 h-3.5" />
         <span>{product.badge}</span>
       </div>
@@ -89,7 +102,7 @@ export default function ProductCard({
   return (
     // 已加入購物車的卡片以品牌藍外框標示選取狀態
     <div
-      className={`w-full h-full bg-white rounded-xl border overflow-hidden shadow-sm hover:shadow-[0_4px_20px_rgba(10,37,78,0.1)] transition-all duration-300 flex flex-col group relative ${
+      className={`w-full h-full bg-white even:bg-surface-container-low rounded-xl border overflow-hidden shadow-sm hover:shadow-[0_4px_20px_rgba(10,37,78,0.1)] transition-all duration-300 flex flex-col group relative ${
         quantity > 0
           ? "border-secondary ring-1 ring-secondary"
           : "border-surface-container-high"
@@ -108,13 +121,25 @@ export default function ProductCard({
           }
         }}
         aria-label={`放大查看 ${product.name} 圖片`}
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (product.images.length <= 1) return;
+          const dir = resolveSwipe(
+            touchStartX.current,
+            e.changedTouches[0].clientX,
+          );
+          if (dir === "left") stepCardImage(1);
+          else if (dir === "right") stepCardImage(-1);
+        }}
       >
         {renderBadge()}
 
         {/* 售完遮罩：使用冰霜毛玻璃質感，並讓內部的「售完」徽章有精緻感 */}
         {isSoldOut && (
           <div className="absolute inset-0 z-10 bg-white/30 backdrop-blur-[3px] border border-white/10 flex items-center justify-center pointer-events-none">
-            <span className="px-5 py-2 rounded-full bg-primary/90 text-white text-xs font-black tracking-[0.2em] shadow-lg border border-white/20">
+            <span className="px-5 py-2 rounded-full bg-primary/90 text-white text-xs font-semibold tracking-[0.2em] shadow-lg border border-white/20">
               售完
             </span>
           </div>
@@ -224,7 +249,6 @@ export default function ProductCard({
         {/* flex-wrap：卡片夠寬時價格與按鈕同列，太窄時按鈕整顆掉到下一行，價格永不換行 */}
         <div className="mt-auto flex flex-wrap items-center justify-between pt-2 border-t border-surface-container-low gap-2">
           <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-            <span className="text-xs text-on-surface-variant">會員價</span>
             <span className="text-xl font-bold text-secondary font-sans">
               NT$ {product.price.toLocaleString()}
             </span>
@@ -245,7 +269,7 @@ export default function ProductCard({
                   className={`w-full h-9 rounded-full text-xs font-bold leading-none transition-all duration-200 flex items-center justify-center space-x-1 shadow-sm py-2.5 px-3 ${
                     isSoldOut
                       ? "bg-surface-container-low text-on-surface-variant border border-surface-container-high cursor-not-allowed"
-                      : "bg-secondary text-white hover:bg-secondary-bright cursor-pointer active:scale-95"
+                      : "bg-promo text-white hover:bg-promo-bright cursor-pointer active:scale-95"
                   }`}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
@@ -297,7 +321,13 @@ export default function ProductCard({
       {/* Lightbox / Image Zoom Overlay */}
       <AnimatePresence>
         {isZoomed && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            ref={lightboxRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${product.name} 圖片放大檢視`}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
             {/* Backdrop overlay with blur */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -316,7 +346,21 @@ export default function ProductCard({
               className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center z-10 pointer-events-none"
             >
               {/* Image Frame */}
-              <div className="relative w-full h-[55vh] sm:h-[65vh] pointer-events-auto rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-primary/60 flex items-center justify-center">
+              <div
+                className="relative w-full h-[55vh] sm:h-[65vh] pointer-events-auto rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-primary/60 flex items-center justify-center"
+                onTouchStart={(e) => {
+                  touchStartX.current = e.touches[0].clientX;
+                }}
+                onTouchEnd={(e) => {
+                  if (product.images.length <= 1) return;
+                  const dir = resolveSwipe(
+                    touchStartX.current,
+                    e.changedTouches[0].clientX,
+                  );
+                  if (dir === "left") stepZoomedImage(1);
+                  else if (dir === "right") stepZoomedImage(-1);
+                }}
+              >
                 {isLargeImageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-primary/30 backdrop-blur-sm z-10">
                     <Loader2 className="w-10 h-10 text-white/80 animate-spin" />
@@ -394,15 +438,15 @@ export default function ProductCard({
 
               {/* Info panel below the lightbox */}
               <div className="mt-4 px-6 py-3 bg-primary/80 backdrop-blur-sm rounded-xl border border-white/10 text-center max-w-md pointer-events-auto shadow-xl flex flex-col items-center">
-                <p className="text-white text-sm font-black tracking-wide font-sans">
+                <p className="text-white text-sm font-semibold tracking-wide font-sans">
                   {product.name}
                 </p>
                 {product.weight && (
-                  <p className="text-[11px] text-surface-dim font-semibold font-sans mt-1">
+                  <p className="text-xs text-surface-dim font-semibold font-sans mt-1">
                     {product.weight}
                   </p>
                 )}
-                <p className="text-xs text-white font-black font-sans mt-1">
+                <p className="text-xs text-white font-bold font-sans mt-1">
                   NT$ {product.price.toLocaleString()}
                 </p>
               </div>

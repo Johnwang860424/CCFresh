@@ -10,7 +10,7 @@ interface HeroProps {
 
 export default function Hero({ onCtaClick }: HeroProps) {
   return (
-    <div className="relative h-[85vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+    <div className="relative h-[70svh] min-h-[420px] sm:h-[85vh] sm:min-h-[500px] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image

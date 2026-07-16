@@ -17,6 +17,13 @@
   --color-secondary: #0050cc;
   --color-secondary-bright: #0266ff;
   --color-promo: #c2571b;
+  --color-promo-bright: #d96a2b;
+  --color-success: #1e7a46;
+  --color-success-container: #d7f0e0;
+  --color-on-success-container: #0a4326;
+  --color-warning: #9a6200;
+  --color-warning-container: #ffefd0;
+  --color-on-warning-container: #5c3a00;
   --color-error: #ba1a1a;
   --color-error-container: #ffdad6;
   --color-surface-tint: #485e8a;

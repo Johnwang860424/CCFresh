@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { CheckCircle2, ShoppingBag, X } from "lucide-react";
+import { useFocusTrap } from "../app/lib/useFocusTrap";
 import { CartItem, OrderFormData, OrderConfirmation } from "../types";
 import { calcLineSubtotal } from "../app/lib/promotions";
 import PwaInstallPrompt from "./PwaInstallPrompt";
@@ -57,10 +59,28 @@ export default function OrderSuccessModal({
   const totalPrice = confirmation.total;
   const isPickup = confirmation.deliveryMethod === "pickup";
 
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  useFocusTrap(modalRef, isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="訂單已成立"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
       {/* Backdrop overlay */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -106,9 +126,9 @@ export default function OrderSuccessModal({
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", damping: 18, stiffness: 320 }}
             >
-              <CheckCircle2 className="w-14 h-14 text-emerald-500 fill-emerald-100" />
+              <CheckCircle2 className="w-14 h-14 text-success fill-success-container" />
             </motion.div>
-            <h3 className="text-lg font-black text-primary font-sans">
+            <h3 className="text-lg font-bold text-primary font-sans">
               感謝您的訂購！
             </h3>
             <p className="text-xs text-on-surface-variant font-medium font-sans max-w-xs">
@@ -118,35 +138,35 @@ export default function OrderSuccessModal({
 
           {/* 取貨號碼牌 / LINE客服資訊：依取貨方式獨立強調 */}
           {isPickup ? (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
+            <div className="bg-warning-container border border-warning/25 rounded-xl p-4 flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-[11px] font-black uppercase tracking-wider text-amber-700">
+                <span className="text-xs font-semibold uppercase tracking-wider text-on-warning-container">
                   取貨號碼牌
                 </span>
-                <span className="text-[10px] text-amber-700/80 font-medium">
+                <span className="text-xs text-on-warning-container/80 font-medium">
                   現場請憑此號碼取貨
                 </span>
               </div>
-              <span className="text-3xl font-black font-mono text-promo leading-none">
+              <span className="text-3xl font-bold font-mono text-promo leading-none">
                 {confirmation.pickupCode}
               </span>
             </div>
           ) : (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+            <div className="bg-success-container border border-success/25 rounded-xl p-4 flex items-center justify-between">
               <div className="flex flex-col space-y-1 max-w-[65%]">
-                <span className="text-[11px] font-black uppercase tracking-wider text-green-800">
+                <span className="text-xs font-semibold uppercase tracking-wider text-on-success-container">
                   聯絡官方 LINE 客服
                 </span>
-                <p className="text-[10px] text-green-800/80 font-medium leading-relaxed">
+                <p className="text-xs text-on-success-container/80 font-medium leading-relaxed">
                   請加入 LINE 並提供訂單編號，客服將儘速為您確認運費並提供匯款帳號。
                 </p>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2 bg-white/50 px-3 py-2 rounded-lg border border-[#06C755]/10 shadow-sm">
                 <div className="text-center">
-                  <span className="text-[9px] uppercase tracking-wider text-green-800/60 font-bold block">
+                  <span className="text-xs uppercase tracking-wider text-on-success-container/60 font-bold block">
                     訂單編號
                   </span>
-                  <span className="text-xl font-black font-mono text-green-800 leading-none">
+                  <span className="text-xl font-bold font-mono text-on-success-container leading-none">
                     {confirmation.pickupCode}
                   </span>
                 </div>
@@ -154,7 +174,7 @@ export default function OrderSuccessModal({
                   href="https://line.me/R/ti/p/@cc8888"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white text-[10px] font-bold rounded-md transition-all active:scale-95 text-center whitespace-nowrap shadow-sm"
+                  className="px-3 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white text-xs font-bold rounded-md transition-all active:scale-95 text-center whitespace-nowrap shadow-sm"
                 >
                   加入 LINE
                 </a>
@@ -182,7 +202,7 @@ export default function OrderSuccessModal({
               {formData.remarks && (
                 <div className="flex flex-col space-y-1">
                   <span className="text-on-surface-variant font-medium">顧客備註 :</span>
-                  <span className="text-on-surface-variant bg-surface-container-low p-2 rounded italic text-[11px]">
+                  <span className="text-on-surface-variant bg-surface-container-low p-2 rounded italic text-xs">
                     &ldquo;{formData.remarks}&rdquo;
                   </span>
                 </div>
@@ -191,13 +211,13 @@ export default function OrderSuccessModal({
 
             {/* Sub-item listed list in receipt */}
             <div className="pt-3 border-t border-surface-container space-y-2 max-h-36 overflow-y-auto">
-              <span className="text-[10px] font-black text-on-surface-variant/70 uppercase tracking-widest block">
+              <span className="text-xs font-semibold text-on-surface-variant/70 uppercase tracking-widest block">
                 訂購明細
               </span>
               {cart.map((item) => (
                 <div
                   key={item.product.id}
-                  className="flex justify-between text-[11px] font-medium font-sans"
+                  className="flex justify-between text-xs font-medium font-sans"
                 >
                   <span className="text-primary">
                     {item.product.name}
@@ -229,16 +249,16 @@ export default function OrderSuccessModal({
                     </span>
                   </div>
                   <div className="pt-2 border-t border-dashed border-surface-container-high space-y-1.5">
-                    <span className="text-[10px] font-black text-on-surface-variant/70 uppercase tracking-widest block">
+                    <span className="text-xs font-semibold text-on-surface-variant/70 uppercase tracking-widest block">
                       運費資訊
                     </span>
                     <div className="flex justify-between text-xs font-bold text-on-surface-variant">
                       <span>711店到店 (10公斤)</span>
-                      <span className="text-amber-600 font-mono">NT$ 150</span>
+                      <span className="text-warning font-mono">NT$ 150</span>
                     </div>
                     <div className="flex justify-between text-xs font-bold text-on-surface-variant">
                       <span>宅配 (20公斤)</span>
-                      <span className="text-amber-600 font-mono">NT$ 250</span>
+                      <span className="text-warning font-mono">NT$ 250</span>
                     </div>
                   </div>
                 </div>
@@ -247,12 +267,12 @@ export default function OrderSuccessModal({
           </div>
 
           {/* 取貨地區 LINE 社群：列出全部地區由顧客自選（見 LINE_GROUPS 註解） */}
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
+          <div className="bg-success-container border border-success/25 rounded-xl p-4 space-y-3">
             <div className="flex flex-col space-y-1">
-              <span className="text-[11px] font-black uppercase tracking-wider text-green-800">
+              <span className="text-xs font-semibold uppercase tracking-wider text-on-success-container">
                 加入取貨地區 LINE 社群
               </span>
-              <p className="text-[10px] text-green-800/80 font-medium leading-relaxed">
+              <p className="text-xs text-on-success-container/80 font-medium leading-relaxed">
                 點擊您取貨地區的社群，掌握最新到貨與取貨資訊。
               </p>
             </div>
@@ -264,7 +284,7 @@ export default function OrderSuccessModal({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`加入 CC生鮮（${region}）LINE 社群`}
-                  className="px-2 py-2 bg-white/70 border border-[#06C755]/25 text-green-800 hover:bg-[#06C755] hover:text-white hover:border-[#06C755] text-[11px] font-bold rounded-md transition-all active:scale-95 text-center shadow-sm"
+                  className="px-2 py-2 bg-white/70 border border-[#06C755]/25 text-on-success-container hover:bg-[#06C755] hover:text-white hover:border-[#06C755] text-xs font-bold rounded-md transition-all active:scale-95 text-center shadow-sm"
                 >
                   {region}
                 </a>
@@ -277,7 +297,7 @@ export default function OrderSuccessModal({
         <div className="p-4 bg-surface border-t border-surface-container-high flex justify-center">
           <button
             onClick={onClose}
-            className="w-full py-3 bg-primary hover:bg-secondary text-white text-sm font-bold rounded-lg cursor-pointer transition-colors active:scale-95 shadow-md flex items-center justify-center space-x-2"
+            className="w-full py-3 bg-secondary hover:bg-secondary-bright text-white text-sm font-bold rounded-lg cursor-pointer transition-colors active:scale-95 shadow-md flex items-center justify-center space-x-2"
           >
             <span>確認並返回首頁</span>
           </button>
