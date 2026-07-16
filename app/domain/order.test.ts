@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prepareOrder } from "./order";
+import { buildEffectiveCatalog, calcStockDeltas, prepareOrder } from "./order";
 import type { PlaceOrderRequest, Product } from "@/types";
 
 const products: Product[] = [{
@@ -79,5 +79,61 @@ describe("order domain", () => {
     expect(prepareOrder(request, limited)).toMatchObject({
       value: { lines: [{ quantity: 2 }] },
     });
+  });
+});
+
+describe("buildEffectiveCatalog", () => {
+  const tracked: Product = { ...products[0], id: "1", stock: 2 };
+  const untracked: Product = { ...products[0], id: "2", stock: null };
+
+  it("adds the held quantity back onto tracked stock", () => {
+    const result = buildEffectiveCatalog(
+      [tracked, untracked],
+      [{ productId: 1, quantity: 3 }],
+    );
+    expect(result).toMatchObject([{ id: "1", stock: 5 }, { id: "2", stock: null }]);
+  });
+
+  it("leaves products the order does not hold unchanged", () => {
+    expect(
+      buildEffectiveCatalog([tracked], [{ productId: 9, quantity: 3 }]),
+    ).toMatchObject([{ id: "1", stock: 2 }]);
+  });
+
+  it("lets prepareOrder accept quantities covered by the order's own holding", () => {
+    // 庫存 0 但原訂單持有 2：改單維持 2 件必須通過預檢。
+    const soldOut: Product[] = [{ ...products[0], stock: 0 }];
+    const effective = buildEffectiveCatalog(soldOut, [{ productId: 1, quantity: 2 }]);
+    expect(prepareOrder(request, effective)).toMatchObject({
+      value: { lines: [{ quantity: 2 }] },
+    });
+  });
+});
+
+describe("calcStockDeltas", () => {
+  it("computes new minus old per product and skips unchanged", () => {
+    expect(
+      calcStockDeltas(
+        [
+          { productId: 1, quantity: 5 }, // 減量 → 還庫存
+          { productId: 2, quantity: 2 }, // 移除 → 全還
+          { productId: 3, quantity: 4 }, // 不變 → 略過
+        ],
+        [
+          { productId: 1, quantity: 2 },
+          { productId: 3, quantity: 4 },
+          { productId: 4, quantity: 1 }, // 新增 → 扣庫存
+        ],
+      ),
+    ).toEqual([
+      { productId: 1, delta: -3 },
+      { productId: 2, delta: -2 },
+      { productId: 4, delta: 1 },
+    ]);
+  });
+
+  it("returns empty when nothing changed", () => {
+    const lines = [{ productId: 1, quantity: 2 }];
+    expect(calcStockDeltas(lines, lines)).toEqual([]);
   });
 });

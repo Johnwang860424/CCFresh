@@ -94,7 +94,7 @@ export default function Navbar({
               onClick={handleLookupClick}
               className="relative py-2 text-sm font-semibold transition-all duration-200 tracking-wide font-sans cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-1 rounded text-on-surface-variant hover:text-primary"
             >
-              查詢訂單
+              查詢/修改訂單
             </button>
           </div>
 
@@ -154,7 +154,7 @@ export default function Navbar({
             onClick={handleLookupClick}
             className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-all text-on-surface-variant hover:bg-surface hover:text-primary"
           >
-            查詢訂單
+            查詢/修改訂單
           </button>
         </div>
       )}

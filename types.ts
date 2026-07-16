@@ -78,7 +78,9 @@ export interface OrderConfirmation {
 
 /** 電話查詢訂單：單筆品項（寫入當下的快照，非最新目錄）。 */
 export interface LookupOrderItem {
+  productId: string;
   name: string;
+  unitPrice: number;
   quantity: number;
   subtotal: number;
 }
@@ -89,11 +91,23 @@ export interface LookupOrder {
   /** 顯示用取貨號：自取＝站點代碼＋流水號（如 A3）；宅配＝純數字。 */
   pickupCode: string;
   customerName: string;
+  phone: string;
   deliveryMethod: DeliveryMethod;
   /** 自取＝縣市＋取貨點；宅配＝收件地址。 */
   location: string;
+  /** 自取的取貨點（宅配為空字串）。 */
+  city: string;
+  township: string;
+  /** 宅配收件地址（自取為空字串）。 */
+  address: string;
   items: LookupOrderItem[];
   total: number;
   note: string | null;
   createdAt: string;
+}
+
+/** 更新訂單 PUT /api/orders/[id] 的請求。lookupPhone＝查詢時輸入的電話，作為授權憑證（與可編輯的 phone 欄位分離）。 */
+export interface UpdateOrderRequest
+  extends Omit<PlaceOrderRequest, "confirmDuplicate"> {
+  lookupPhone: string;
 }

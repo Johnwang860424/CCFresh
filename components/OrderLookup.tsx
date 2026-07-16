@@ -1,9 +1,18 @@
 "use client";
 
 import { useState, ChangeEvent, SubmitEvent } from "react";
-import { Search, Phone, AlertCircle, Store, Truck } from "lucide-react";
+import {
+  Search,
+  Phone,
+  AlertCircle,
+  Store,
+  Truck,
+  Pencil,
+  BellRing,
+} from "lucide-react";
 import { LookupOrder } from "../types";
 import { isValidTwMobile, sanitizePhoneInput } from "../app/lib/validation";
+import OrderEditForm from "./OrderEditForm";
 
 // 下單時間以本地格式呈現（查詢結果只在 client 渲染，無 hydration 疑慮）。
 function formatOrderTime(iso: string): string {
@@ -28,6 +37,26 @@ export default function OrderLookup() {
   const [orders, setOrders] = useState<LookupOrder[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
+  // 正在編輯的訂單 id；null＝無。
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // 儲存後號碼牌有變動的訂單（id → 新號碼），用於顯著提示。
+  const [renumbered, setRenumbered] = useState<Map<string, string>>(new Map());
+
+  const handleSaved = (updated: LookupOrder, previousCode: string) => {
+    setOrders((prev) =>
+      prev?.map((o) => (o.id === updated.id ? updated : o)) ?? prev,
+    );
+    setEditingId(null);
+    setRenumbered((prev) => {
+      const next = new Map(prev);
+      if (updated.pickupCode !== previousCode) {
+        next.set(updated.id, updated.pickupCode);
+      } else {
+        next.delete(updated.id);
+      }
+      return next;
+    });
+  };
 
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     setPhone(sanitizePhoneInput(e.target.value));
@@ -58,6 +87,8 @@ export default function OrderLookup() {
         );
       }
       setOrders((data as { orders: LookupOrder[] }).orders);
+      setEditingId(null);
+      setRenumbered(new Map());
     } catch (err) {
       console.error("Failed to look up orders", err);
       setOrders(null);
@@ -78,7 +109,7 @@ export default function OrderLookup() {
           <div className="flex items-center space-x-3 pb-5 border-b border-surface-container mb-6">
             <Search className="w-6 h-6 text-secondary" />
             <h2 className="text-xl sm:text-2xl font-bold text-primary font-sans tracking-wide">
-              查詢訂單
+              查詢/修改訂單
             </h2>
           </div>
 
@@ -108,7 +139,7 @@ export default function OrderLookup() {
                 className="px-8 py-3 bg-secondary hover:bg-secondary-bright text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Search className="w-4 h-4" />
-                <span>{searching ? "查詢中..." : "查詢"}</span>
+                <span>{searching ? "查詢中..." : "查詢/修改訂單"}</span>
               </button>
             </div>
             {error && (
@@ -135,11 +166,35 @@ export default function OrderLookup() {
                 <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
                   {orders.map((order) => {
                     const method = METHOD_DISPLAY[order.deliveryMethod];
+                    if (editingId === order.id) {
+                      return (
+                        <div
+                          key={order.id}
+                          className="bg-surface-container-low border border-surface-dim rounded-xl p-4 sm:p-5"
+                        >
+                          <OrderEditForm
+                            order={order}
+                            onSaved={(updated) =>
+                              handleSaved(updated, order.pickupCode)
+                            }
+                            onCancel={() => setEditingId(null)}
+                          />
+                        </div>
+                      );
+                    }
+                    const newCode = renumbered.get(order.id);
                     return (
                       <div
                         key={order.id}
                         className="bg-surface-container-low border border-surface-dim rounded-xl p-4 sm:p-5 space-y-3"
                       >
+                        {/* 號碼牌變動提示（換取貨點/取貨方式後重新編派） */}
+                        {newCode && (
+                          <div className="p-3 bg-secondary/10 border border-secondary rounded-lg text-sm font-bold text-secondary flex items-center space-x-2">
+                            <BellRing className="w-4 h-4 flex-shrink-0" />
+                            <span>取貨號碼牌已更新為 {newCode}，請以新號碼取貨</span>
+                          </div>
+                        )}
                         {/* 主要資訊：編號 + 姓名 */}
                         <div className="flex justify-between items-baseline gap-3">
                           <span className="text-base font-semibold text-primary font-sans">
@@ -185,15 +240,25 @@ export default function OrderLookup() {
                           </span>
                         </div>
 
-                        {/* 次要資訊：取貨方式與地點、備註 */}
-                        <div className="text-xs font-medium text-on-surface-variant font-sans space-y-1 pt-1 border-t border-surface-dim/50">
-                          <p className="flex items-center space-x-1.5">
-                            <method.Icon className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
-                            <span>
-                              {method.label}｜{order.location}
-                            </span>
-                          </p>
-                          {order.note && <p>備註：{order.note}</p>}
+                        {/* 次要資訊：取貨方式與地點、備註 + 編輯入口 */}
+                        <div className="text-xs font-medium text-on-surface-variant font-sans pt-1 border-t border-surface-dim/50 flex items-end justify-between gap-3">
+                          <div className="space-y-1 min-w-0">
+                            <p className="flex items-center space-x-1.5">
+                              <method.Icon className="w-3.5 h-3.5 text-secondary flex-shrink-0" />
+                              <span>
+                                {method.label}｜{order.location}
+                              </span>
+                            </p>
+                            {order.note && <p>備註：{order.note}</p>}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(order.id)}
+                            className="flex-shrink-0 px-3 py-1.5 border border-secondary text-secondary text-xs font-bold rounded-lg transition-colors hover:bg-white flex items-center space-x-1 cursor-pointer active:scale-95"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            <span>編輯</span>
+                          </button>
                         </div>
                       </div>
                     );
