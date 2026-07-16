@@ -38,6 +38,48 @@ export type PrepareOrderResult =
 const clean = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
+/** 原訂單持有的商品數量（改單時會釋回），product id 與資料庫同為整數。 */
+export interface HeldQuantity {
+  productId: number;
+  quantity: number;
+}
+
+/**
+ * 改單預檢用的有效目錄：原訂單持有量改單時會釋回，
+ * 把 stock 墊高後即可原樣重用 prepareOrder 的庫存預檢與訊息。
+ */
+export function buildEffectiveCatalog(
+  products: Product[],
+  held: HeldQuantity[],
+): Product[] {
+  const heldById = new Map(held.map((h) => [String(h.productId), h.quantity]));
+  return products.map((p) =>
+    p.stock === null
+      ? p
+      : { ...p, stock: p.stock + (heldById.get(p.id) ?? 0) },
+  );
+}
+
+/**
+ * 每商品庫存調整差額（新 − 舊）：新增/加量為正＝扣庫存，移除/減量為負＝還庫存；
+ * 差額為 0 的商品略過。是否追蹤庫存（stock IS NULL）由 SQL 端過濾。
+ */
+export function calcStockDeltas(
+  before: HeldQuantity[],
+  after: HeldQuantity[],
+): { productId: number; delta: number }[] {
+  const deltaById = new Map<number, number>();
+  for (const b of before) {
+    deltaById.set(b.productId, (deltaById.get(b.productId) ?? 0) - b.quantity);
+  }
+  for (const a of after) {
+    deltaById.set(a.productId, (deltaById.get(a.productId) ?? 0) + a.quantity);
+  }
+  return [...deltaById]
+    .filter(([, delta]) => delta !== 0)
+    .map(([productId, delta]) => ({ productId, delta }));
+}
+
 /** Pure order validation and authoritative catalog pricing. */
 export function prepareOrder(
   raw: unknown,
