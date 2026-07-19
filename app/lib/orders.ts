@@ -21,15 +21,28 @@ import {
   DUPLICATE_ORDER_MESSAGE,
 } from "@/types";
 
-// pickup_number 撞唯一鍵（併發下單同一取貨點）時的重試次數。
+// pickup_number 撞唯一鍵（併發下單同一「取貨點×來源」）時的重試次數。
 const PICKUP_NUMBER_RETRIES = 5;
 
-// 顯示用取貨號：自取＝站點代碼（pickup_spots.code，管理端維護）＋流水號；宅配無站點＝純數字。
+// 本 App 建立的訂單一律為「網站」來源（orders.tag；FB / Line 訂單由後台建立）。
+const ORDER_SOURCE_TAG = "網站";
+
+/** 訂單來源 → 取貨號中的來源字母（FB 與未知來源不加字母，維持原格式）。 */
+function sourceLetter(tag: string): string {
+  if (tag === "Line") return "L";
+  if (tag === "網站") return "S";
+  return "";
+}
+
+// 顯示用取貨號：站點代碼（pickup_spots.code，管理端維護）＋來源字母＋流水號，
+// 如 A5（FB）/ AL5（Line）/ AS5（網站）；宅配無站點代碼，僅來源字母＋流水號（7 / L7 / S7）。
+// 流水號序列依「取貨點×來源」各自獨立遞增（見 insertOrder 的取號與 orders 唯一鍵）。
 function formatPickupCode(
   spotCode: string | null,
   pickupNumber: number,
+  tag: string,
 ): string {
-  return spotCode === null ? String(pickupNumber) : `${spotCode}${pickupNumber}`;
+  return `${spotCode ?? ""}${sourceLetter(tag)}${pickupNumber}`;
 }
 
 // Postgres 唯一鍵衝突。
@@ -108,7 +121,7 @@ export async function createOrder(
   if ("error" in dest) return dest;
 
   // 建單：訂單、明細、扣庫存以單一 CTE 語句原子寫入（Neon HTTP 無互動式交易）。
-  // 取貨單需在同一取貨點內遞增號碼牌，撞唯一鍵時重試。
+  // 號碼牌於「取貨點×來源」作用域內遞增，撞唯一鍵時重試。
   const result = await insertOrder({
     customerName: value.customerName,
     phone: value.phone,
@@ -128,7 +141,11 @@ export async function createOrder(
     order: {
       total: value.total,
       deliveryMethod: value.deliveryMethod,
-      pickupCode: formatPickupCode(dest.spotCode, result.pickupNumber),
+      pickupCode: formatPickupCode(
+        dest.spotCode,
+        result.pickupNumber,
+        ORDER_SOURCE_TAG,
+      ),
     },
   };
 }
@@ -216,12 +233,15 @@ async function insertOrder(
         WITH new_order AS (
           INSERT INTO orders
             (customer_name, phone, delivery_method, pickup_spot_id, shipping_address,
-             pickup_number, note, total)
+             pickup_number, note, total, tag)
           VALUES
             (${args.customerName}, ${args.phone}, ${args.deliveryMethod}, ${args.pickupSpotId}, ${args.shippingAddress},
+             -- 各來源序列獨立：取號僅看同取貨點內同 tag 的訂單，
+             -- 唯一鍵為 (pickup_spot_id, tag, pickup_number)。
              (SELECT COALESCE(MAX(pickup_number), 0) + 1
-                FROM orders WHERE pickup_spot_id IS NOT DISTINCT FROM ${args.pickupSpotId}),
-             ${args.note}, ${args.total})
+                FROM orders WHERE pickup_spot_id IS NOT DISTINCT FROM ${args.pickupSpotId}
+                  AND tag = ${ORDER_SOURCE_TAG}),
+             ${args.note}, ${args.total}, ${ORDER_SOURCE_TAG})
           RETURNING id, pickup_number
         ),
         dec AS (
@@ -274,6 +294,7 @@ async function insertOrder(
 interface LookupRow {
   id: number;
   pickup_number: number;
+  tag: string;
   spot_code: string | null;
   customer_name: string;
   phone: string;
@@ -296,7 +317,7 @@ interface LookupRow {
 function toLookupOrder(row: LookupRow): LookupOrder {
   return {
     id: String(row.id),
-    pickupCode: formatPickupCode(row.spot_code, row.pickup_number),
+    pickupCode: formatPickupCode(row.spot_code, row.pickup_number, row.tag),
     customerName: row.customer_name,
     phone: row.phone,
     deliveryMethod: row.delivery_method,
@@ -333,6 +354,7 @@ export async function findOrdersByPhone(
     SELECT
       o.id,
       o.pickup_number,
+      o.tag,
       ps.code AS spot_code,
       o.customer_name,
       o.phone,
@@ -377,7 +399,7 @@ export type UpdateOrderResult =
  * 內容走與下單同一套 prepareOrder 重驗證計價（現行目錄價格，不信任前端金額）；
  * 庫存預檢以有效可售量（目前庫存＋原單持有量）為準。
  * 訂單欄位、明細替換與庫存差額調整在單一 CTE 原子完成；
- * 換取貨點／換取貨方式時號碼牌於新 scope 重新編派（MAX+1，撞唯一鍵重試）。
+ * 換取貨點／換取貨方式時號碼牌於新 scope（取貨點×來源 tag）重新編派（MAX+1，撞唯一鍵重試）。
  */
 export async function updateOrder(
   rawId: string,
@@ -395,6 +417,7 @@ export async function updateOrder(
   const originals = (await sql`
     SELECT
       o.pickup_spot_id,
+      o.tag,
       o.created_at,
       COALESCE(
         (
@@ -410,6 +433,7 @@ export async function updateOrder(
     WHERE o.id = ${orderId} AND o.phone = ${normalizePhone(lookupPhone)}
   `) as {
     pickup_spot_id: number | null;
+    tag: string;
     created_at: string | Date;
     items: { product_id: number; quantity: number }[];
   }[];
@@ -433,7 +457,14 @@ export async function updateOrder(
     value.lines.map((li) => ({ productId: li.productId, quantity: li.quantity })),
   );
 
-  const result = await runOrderUpdate(orderId, value, dest, deltas, held);
+  const result = await runOrderUpdate(
+    orderId,
+    value,
+    dest,
+    deltas,
+    held,
+    original.tag,
+  );
   if ("error" in result) return result;
 
   // 庫存有變動才需要讓兩邊目錄反映新剩餘量。
@@ -443,7 +474,11 @@ export async function updateOrder(
   return {
     order: {
       id: String(orderId),
-      pickupCode: formatPickupCode(dest.spotCode, result.pickupNumber),
+      pickupCode: formatPickupCode(
+        dest.spotCode,
+        result.pickupNumber,
+        original.tag,
+      ),
       customerName: value.customerName,
       phone: value.phone,
       deliveryMethod: value.deliveryMethod,
@@ -471,6 +506,8 @@ async function runOrderUpdate(
   dest: Destination,
   deltas: { productId: number; delta: number }[],
   held: HeldQuantity[],
+  // 訂單自身的來源 tag（改單不變更來源；後台建立的 FB/Line 單也可能由此改）。
+  tag: string,
 ): Promise<{ pickupNumber: number } | { error: string }> {
   const {
     productIdArr,
@@ -497,7 +534,7 @@ async function runOrderUpdate(
             note = ${value.note},
             total = ${value.total},
             -- SET 右側的欄位參照皆為舊值：取貨點沒變就保留原號碼牌，
-            -- 有變才在新 scope 取 MAX+1（撞唯一鍵由外層重試）。
+            -- 有變才在新 scope（取貨點×來源 tag）取 MAX+1（撞唯一鍵由外層重試）。
             pickup_number = CASE
               WHEN pickup_spot_id IS NOT DISTINCT FROM ${dest.pickupSpotId}
                 THEN pickup_number
@@ -505,6 +542,7 @@ async function runOrderUpdate(
                 SELECT COALESCE(MAX(o2.pickup_number), 0) + 1
                 FROM orders o2
                 WHERE o2.pickup_spot_id IS NOT DISTINCT FROM ${dest.pickupSpotId}
+                  AND o2.tag = ${tag}
               )
             END
           WHERE id = ${orderId}
