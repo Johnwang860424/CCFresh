@@ -64,7 +64,7 @@ export async function fillDeliveryOrder(
   }
   await page.locator('input[name="name"]').fill(name);
   await page.locator('input[name="phone"]').fill(phone);
-  await page.getByRole("button", { name: "宅配到府" }).click();
+  await page.getByRole("button", { name: "宅配/7-11" }).click();
   await page.locator('input[name="address"]').fill(address);
   if (remarks !== undefined) {
     await page.locator('textarea[name="remarks"]').fill(remarks);

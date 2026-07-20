@@ -509,7 +509,7 @@ export default function CheckoutForm({
                 {(
                   [
                     { value: "pickup", label: "指定地點自取", Icon: Store },
-                    { value: "delivery", label: "宅配到府", Icon: Truck },
+                    { value: "delivery", label: "宅配/7-11", Icon: Truck },
                   ] as const
                 ).map(({ value, label, Icon }) => {
                   const active = formData.deliveryMethod === value;
@@ -630,7 +630,7 @@ export default function CheckoutForm({
                 )}
               </div>
             ) : (
-              /* 宅配到府：自行填寫收件地址 */
+              /* 宅配：自行填寫收件地址 */
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label htmlFor="checkout-address" className="text-xs font-bold text-primary uppercase tracking-wider flex items-center space-x-1">

@@ -1,6 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { randomInt } from "node:crypto";
 import { ORDER_INFO_STORAGE_KEY as KEY } from "../app/lib/order-info-storage";
 import { placeDeliveryOrder } from "./helpers";
+
+function uniquePhone(): string {
+  return `09${randomInt(0, 100_000_000).toString().padStart(8, "0")}`;
+}
 
 // 覆蓋 openspec specs/order-info-autofill：下單成功後記住訂購資料，開站自動帶入。
 // 走真實 dev server + 測試庫（.env.local），下單一律用宅配（不依賴 pickup_spots 資料）。
@@ -18,15 +23,17 @@ test.beforeEach(async ({ page }) => {
 
 test("宅配下單成功後 reload 自動帶入全部欄位", async ({ page }) => {
   // Scenario: 宅配下單成功 + 有已存資料
+  const phone = uniquePhone();
   await placeDeliveryOrder(page, {
     name: "E2E記憶測試",
+    phone,
     remarks: "E2E 備註",
   });
 
   await page.reload();
 
   await expect(page.locator('input[name="name"]')).toHaveValue("E2E記憶測試");
-  await expect(page.locator('input[name="phone"]')).toHaveValue("0912345678");
+  await expect(page.locator('input[name="phone"]')).toHaveValue(phone);
   // 收件地址欄只在宅配模式渲染：有值即證明 deliveryMethod 也一併帶入
   await expect(page.locator('input[name="address"]')).toHaveValue(
     "台北市中正區測試路 1 號",

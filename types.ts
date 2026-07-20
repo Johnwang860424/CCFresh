@@ -38,7 +38,7 @@ export interface OrderFormData {
   // 指定地點自取
   city: string;
   township: string;
-  // 宅配到府
+  // 宅配/7-11
   address: string;
   // 組合後的顯示字串（供收據/訂單顯示）
   location: string;

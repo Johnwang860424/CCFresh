@@ -38,7 +38,7 @@ test("疑似重複訂單先提醒，返回不建單，確認後才建立", async
 
   const dialog = page.getByRole("alertdialog", { name: "請確認訂單" });
   await expect(dialog).toContainText(
-    "系統偵測到您可能已有訂單。請確認是否為重複下單",
+    "系統偵測到您可能已有訂單，請確認是否為重複下單",
   );
   await dialog.getByRole("button", { name: "返回確認" }).click();
   await expect(dialog).toHaveCount(0);

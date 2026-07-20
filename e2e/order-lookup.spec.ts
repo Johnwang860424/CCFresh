@@ -47,7 +47,7 @@ test("下單後以電話查得到訂單，連字號格式也命中", async ({ pa
   await expect(section.getByText("數量: 1")).toBeVisible();
   await expect(section.getByText("總計")).toBeVisible();
   await expect(
-    section.getByText("宅配到府｜台北市中正區測試路 1 號"),
+    section.getByText("宅配/7-11｜台北市中正區測試路 1 號"),
   ).toBeVisible();
   await expect(section.getByText("備註：E2E 查詢備註")).toBeVisible();
 });
@@ -75,7 +75,7 @@ test("桌面 Navbar 的查詢訂單捲動到查詢區塊", async ({ page }) => {
   await waitForCatalog(page);
   await page
     .getByRole("navigation")
-    .getByRole("button", { name: "查詢訂單" })
+    .getByRole("button", { name: "查詢/修改訂單" })
     .click();
 
   await expect(lookupSection(page)).toBeInViewport();
@@ -90,7 +90,7 @@ test("手機選單的查詢訂單捲動到查詢區塊並收合選單", async ({
   // getByRole 不比對 CSS 隱藏的桌面版按鈕，手機寬度下只會找到選單內那顆
   const navLookupButton = page
     .getByRole("navigation")
-    .getByRole("button", { name: "查詢訂單" });
+    .getByRole("button", { name: "查詢/修改訂單" });
   await page.getByRole("button", { name: "Toggle Menu" }).click();
   await navLookupButton.click();
 

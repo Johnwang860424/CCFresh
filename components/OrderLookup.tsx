@@ -28,7 +28,7 @@ function formatOrderTime(iso: string): string {
 
 const METHOD_DISPLAY = {
   pickup: { label: "指定地點自取", Icon: Store },
-  delivery: { label: "宅配到府", Icon: Truck },
+  delivery: { label: "宅配/7-11", Icon: Truck },
 } as const;
 
 export default function OrderLookup() {

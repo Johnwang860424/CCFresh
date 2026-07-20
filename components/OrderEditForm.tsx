@@ -46,10 +46,9 @@ interface EditItem {
 }
 
 const inputClass = (hasError: boolean) =>
-  `w-full px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-secondary ${
-    hasError
-      ? "border-error focus:ring-error/40"
-      : "border-surface-dim hover:border-surface-tint"
+  `w-full px-4 py-3 bg-surface border rounded-lg text-sm font-medium text-on-surface transition-colors focus:outline-none focus:ring-2 focus:ring-secondary ${hasError
+    ? "border-error focus:ring-error/40"
+    : "border-surface-dim hover:border-surface-tint"
   }`;
 
 /** 查詢結果訂單卡的內嵌編輯表單：品項增刪改、取貨方式/地點、訂購人、備註。 */
@@ -318,64 +317,64 @@ export default function OrderEditForm({
               const atCap = cap !== null && it.quantity >= cap;
               return (
                 <div key={it.productId} className="space-y-1">
-                <div className="flex justify-between items-center text-xs font-sans text-on-surface px-2 py-1.5 bg-white/60 rounded gap-2">
-                  <span className="font-semibold min-w-0 truncate">
-                    {product?.name ?? it.name}
-                    {!product && !productsLoading && (
-                      <span className="ml-1.5 text-error font-bold">
-                        已下架，請移除
-                      </span>
-                    )}
-                  </span>
-                  <div className="flex items-center space-x-2 flex-shrink-0">
-                    <div className="flex items-center space-x-1.5">
+                  <div className="flex justify-between items-center text-xs font-sans text-on-surface px-2 py-1.5 bg-white/60 rounded gap-2">
+                    <span className="font-semibold min-w-0 truncate">
+                      {product?.name ?? it.name}
+                      {!product && !productsLoading && (
+                        <span className="ml-1.5 text-error font-bold">
+                          已下架，請移除
+                        </span>
+                      )}
+                    </span>
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() => changeQuantity(it.productId, -1)}
+                          disabled={it.quantity <= 1}
+                          aria-label={`減少 ${it.name} 數量`}
+                          className="w-6 h-6 bg-white hover:bg-surface-container-high text-primary rounded-full flex items-center justify-center border border-surface-container-low cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="min-w-6 text-center font-semibold tabular-nums">
+                          {it.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => changeQuantity(it.productId, 1)}
+                          disabled={!product || atCap}
+                          aria-label={`增加 ${it.name} 數量`}
+                          className="w-6 h-6 bg-secondary hover:bg-secondary-bright text-white rounded-full flex items-center justify-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                      {product && (
+                        <span className="font-bold text-secondary tabular-nums">
+                          NT${" "}
+                          {calcLineSubtotal(
+                            product.promo,
+                            product.price,
+                            it.quantity,
+                          ).toLocaleString()}
+                        </span>
+                      )}
                       <button
                         type="button"
-                        onClick={() => changeQuantity(it.productId, -1)}
-                        disabled={it.quantity <= 1}
-                        aria-label={`減少 ${it.name} 數量`}
-                        className="w-6 h-6 bg-white hover:bg-surface-container-high text-primary rounded-full flex items-center justify-center border border-surface-container-low cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        onClick={() => removeItem(it.productId)}
+                        aria-label={`移除 ${it.name}`}
+                        className="p-1 text-error rounded transition-colors hover:bg-error-container cursor-pointer active:scale-95"
                       >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="min-w-6 text-center font-semibold tabular-nums">
-                        {it.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => changeQuantity(it.productId, 1)}
-                        disabled={!product || atCap}
-                        aria-label={`增加 ${it.name} 數量`}
-                        className="w-6 h-6 bg-secondary hover:bg-secondary-bright text-white rounded-full flex items-center justify-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <Plus className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    {product && (
-                      <span className="font-bold text-secondary tabular-nums">
-                        NT${" "}
-                        {calcLineSubtotal(
-                          product.promo,
-                          product.price,
-                          it.quantity,
-                        ).toLocaleString()}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeItem(it.productId)}
-                      aria-label={`移除 ${it.name}`}
-                      className="p-1 text-error rounded transition-colors hover:bg-error-container cursor-pointer active:scale-95"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
                   </div>
-                </div>
-                {atCap && (
-                  <p className="px-2 text-xs font-medium text-on-surface-variant">
-                    已達庫存上限（最多可訂 {cap}）
-                  </p>
-                )}
+                  {atCap && (
+                    <p className="px-2 text-xs font-medium text-on-surface-variant">
+                      已達庫存上限（最多可訂 {cap}）
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -435,7 +434,7 @@ export default function OrderEditForm({
           {(
             [
               { value: "pickup", label: "指定地點自取", Icon: Store },
-              { value: "delivery", label: "宅配到府", Icon: Truck },
+              { value: "delivery", label: "宅配/7-11", Icon: Truck },
             ] as const
           ).map(({ value, label, Icon }) => {
             const active = form.deliveryMethod === value;
@@ -447,11 +446,10 @@ export default function OrderEditForm({
                   setForm((prev) => ({ ...prev, deliveryMethod: value }));
                   setErrors({});
                 }}
-                className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer active:scale-95 ${
-                  active
-                    ? "bg-primary text-white border-primary shadow-md"
-                    : "bg-surface text-on-surface-variant border-surface-dim hover:border-surface-tint"
-                }`}
+                className={`flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer active:scale-95 ${active
+                  ? "bg-primary text-white border-primary shadow-md"
+                  : "bg-surface text-on-surface-variant border-surface-dim hover:border-surface-tint"
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{label}</span>
